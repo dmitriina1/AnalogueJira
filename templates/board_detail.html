@@ -5,7 +5,10 @@
     <div class="board-header">
         <h1>{{ board.name }}</h1>
         <p>{{ board.description }}</p>
-        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Boards</a>
+        <div class="board-actions">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">← All Boards</a>
+            <button id="add-list-btn" class="btn btn-primary">Add List</button>
+        </div>
     </div>
     
     <div class="lists-container" id="lists-container">
@@ -13,77 +16,154 @@
         <div class="list" data-list-id="{{ list.id }}">
             <div class="list-header">
                 <h3>{{ list.name }}</h3>
-                <button class="add-card-btn" data-list-id="{{ list.id }}">Add Card</button>
+                <div class="list-actions">
+                    <button class="add-card-btn" data-list-id="{{ list.id }}">+</button>
+                    <button class="archive-list-btn" data-list-id="{{ list.id }}">×</button>
+                </div>
             </div>
-            <div class="cards-container">
-                {% for card in list.cards_list %}
-                <div class="card" data-card-id="{{ card.id }}">
-                    <h4>{{ card.title }}</h4>
-                    {% if card.description %}
-                    <p>{{ card.description }}</p>
+            <div class="cards-container" data-list-id="{{ list.id }}">
+                {% for card in list.cards %}
+                <div class="card" draggable="true" data-card-id="{{ card.id }}">
+                    <!-- Labels -->
+                    {% if card.labels_list %}
+                    <div class="card-labels">
+                        {% for label in card.labels_list %}
+                        <span class="card-label" style="background-color: {{ label.color }};"></span>
+                        {% endfor %}
+                    </div>
                     {% endif %}
+                    
+                    <div class="card-content">
+                        <h4>{{ card.title }}</h4>
+                        {% if card.description %}
+                        <p>{{ card.description }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Card Meta -->
+                    <div class="card-meta">
+                        {% if card.due_date %}
+                        <div class="due-date {% if card.due_date < now %}overdue{% endif %}">
+                            📅 {{ card.due_date.strftime('%m/%d') }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if card.assignee %}
+                        <div class="assignee" title="{{ card.assignee.username }}">
+                            {{ card.assignee.username[:1].upper() }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if card.checklists_list %}
+                        <div class="checklist-progress">
+                            ✅ {{ card.checklists_list[0].items_list|selectattr('is_checked')|list|length }}/{{ card.checklists_list[0].items_list|length }}
+                        </div>
+                        {% endif %}
+                        
+                        {% if card.comments %}
+                        <div class="comment-count">
+                            💬 {{ card.comments|length }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
                     <div class="card-actions">
-                        <button class="edit-card-btn" data-card-id="{{ card.id }}">Edit</button>
-                        <button class="delete-card-btn" data-card-id="{{ card.id }}">Delete</button>
+                        <button class="edit-card-btn" data-card-id="{{ card.id }}">✎</button>
+                        <button class="archive-card-btn" data-card-id="{{ card.id }}">×</button>
                     </div>
                 </div>
                 {% endfor %}
             </div>
+            <button class="add-card-text-btn" data-list-id="{{ list.id }}">+ Add a card</button>
         </div>
         {% endfor %}
         
-        <div class="list add-list-container">
-            <button id="add-list-btn" class="add-list-btn">Add another list</button>
+        <!-- Add List Column -->
+        <div class="list add-list-column">
+            <button id="add-list-text-btn" class="add-list-btn">
+                + Add another list
+            </button>
             <div class="add-list-form" style="display: none;">
-                <input type="text" id="new-list-name" placeholder="Enter list title...">
-                <div class="form-actions">
-                    <button id="save-list-btn" class="btn btn-primary">Add list</button>
-                    <button id="cancel-list-btn" class="btn btn-secondary">Cancel</button>
+                <input type="text" id="new-list-name" placeholder="Enter list title..." class="list-input">
+                <div class="list-form-actions">
+                    <button id="save-list-btn" class="btn btn-primary">Add</button>
+                    <button id="cancel-list-btn" class="btn btn-secondary">×</button>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Модальное окно для создания карточки -->
+<!-- Card Modal -->
 <div id="card-modal" class="modal">
     <div class="modal-content">
-        <h3>Create New Card</h3>
+        <span class="close">&times;</span>
+        <h3 id="card-modal-title">Add Card</h3>
         <form id="card-form">
             <div class="form-group">
-                <label for="card-title">Title:</label>
-                <input type="text" id="card-title" required>
+                <input type="text" id="card-title" required placeholder="Enter a title for this card...">
             </div>
             <div class="form-group">
-                <label for="card-description">Description:</label>
-                <textarea id="card-description"></textarea>
+                <textarea id="card-description" placeholder="Add a description..."></textarea>
             </div>
+            
+            <!-- Advanced Options -->
+            <div class="advanced-options">
+                <div class="form-group">
+                    <label>Assign to:</label>
+                    <select id="card-assignee">
+                        <option value="">Unassigned</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Due date:</label>
+                    <input type="date" id="card-due-date">
+                </div>
+                
+                <div class="form-group">
+                    <label>Labels:</label>
+                    <div class="labels-options">
+                        {% for label in labels %}
+                        <label class="label-option">
+                            <input type="checkbox" name="card-labels" value="{{ label.id }}">
+                            <span class="label-color" style="background-color: {{ label.color }};"></span>
+                            {{ label.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
             <input type="hidden" id="card-list-id">
+            <input type="hidden" id="card-id">
             <div class="form-actions">
                 <button type="button" id="cancel-card" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Card</button>
+                <button type="submit" class="btn btn-primary">Save</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Модальное окно для редактирования карточки -->
-<div id="edit-card-modal" class="modal">
+<!-- Create Label Modal -->
+<div id="label-modal" class="modal">
     <div class="modal-content">
-        <h3>Edit Card</h3>
-        <form id="edit-card-form">
+        <span class="close">&times;</span>
+        <h3>Create Label</h3>
+        <form id="label-form">
             <div class="form-group">
-                <label for="edit-card-title">Title:</label>
-                <input type="text" id="edit-card-title" required>
+                <input type="text" id="label-name" required placeholder="Label name">
             </div>
             <div class="form-group">
-                <label for="edit-card-description">Description:</label>
-                <textarea id="edit-card-description"></textarea>
+                <label>Color:</label>
+                <input type="color" id="label-color" value="#ff6b6b">
             </div>
-            <input type="hidden" id="edit-card-id">
             <div class="form-actions">
-                <button type="button" id="cancel-edit-card" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" id="cancel-label">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
             </div>
         </form>
     </div>
