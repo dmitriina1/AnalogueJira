@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="board-detail" style="background-color: {{ board.background_color }};">
+    <div class="board-header">
+        <h1>{{ board.name }}</h1>
+        <p>{{ board.description }}</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back to Boards</a>
+    </div>
+    
+    <div class="lists-container" id="lists-container">
+        {% for list in lists %}
+        <div class="list" data-list-id="{{ list.id }}">
+            <div class="list-header">
+                <h3>{{ list.name }}</h3>
+                <button class="add-card-btn" data-list-id="{{ list.id }}">Add Card</button>
+            </div>
+            <div class="cards-container">
+                {% for card in list.cards_list %}
+                <div class="card" data-card-id="{{ card.id }}">
+                    <h4>{{ card.title }}</h4>
+                    {% if card.description %}
+                    <p>{{ card.description }}</p>
+                    {% endif %}
+                    <div class="card-actions">
+                        <button class="edit-card-btn" data-card-id="{{ card.id }}">Edit</button>
+                        <button class="delete-card-btn" data-card-id="{{ card.id }}">Delete</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="list add-list-container">
+            <button id="add-list-btn" class="add-list-btn">Add another list</button>
+            <div class="add-list-form" style="display: none;">
+                <input type="text" id="new-list-name" placeholder="Enter list title...">
+                <div class="form-actions">
+                    <button id="save-list-btn" class="btn btn-primary">Add list</button>
+                    <button id="cancel-list-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для создания карточки -->
+<div id="card-modal" class="modal">
+    <div class="modal-content">
+        <h3>Create New Card</h3>
+        <form id="card-form">
+            <div class="form-group">
+                <label for="card-title">Title:</label>
+                <input type="text" id="card-title" required>
+            </div>
+            <div class="form-group">
+                <label for="card-description">Description:</label>
+                <textarea id="card-description"></textarea>
+            </div>
+            <input type="hidden" id="card-list-id">
+            <div class="form-actions">
+                <button type="button" id="cancel-card" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Card</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для редактирования карточки -->
+<div id="edit-card-modal" class="modal">
+    <div class="modal-content">
+        <h3>Edit Card</h3>
+        <form id="edit-card-form">
+            <div class="form-group">
+                <label for="edit-card-title">Title:</label>
+                <input type="text" id="edit-card-title" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-card-description">Description:</label>
+                <textarea id="edit-card-description"></textarea>
+            </div>
+            <input type="hidden" id="edit-card-id">
+            <div class="form-actions">
+                <button type="button" id="cancel-edit-card" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
