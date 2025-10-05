@@ -1,6 +1,7 @@
 // Main functionality
 document.addEventListener('DOMContentLoaded', function() {
-    initializeDashboard();
+    initializeDashboardFunctionality();
+    initializeDragAndDrop();
     
     // Close modal when clicking outside
     window.addEventListener('click', function(e) {
@@ -10,396 +11,384 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Dashboard functionality
-function initializeDashboard() {
-    initializeListManagement();
-    initializeCardManagement();
-    initializeLabelManagement();
-    initializeDragAndDrop();
-}
-
-// List management
-function initializeListManagement() {
+function initializeDashboardFunctionality() {
+    // List creation
     const addListBtn = document.getElementById('add-list-btn');
-    const addListTextBtn = document.getElementById('add-list-text-btn');
-    const saveListBtn = document.getElementById('save-list-btn');
-    const cancelListBtn = document.getElementById('cancel-list-btn');
-    const newListName = document.getElementById('new-list-name');
-
+    const listModal = document.getElementById('list-modal');
+    const cancelList = document.getElementById('cancel-list');
+    const listForm = document.getElementById('list-form');
+    const listNameInput = document.getElementById('list-name');
+    
     if (addListBtn) {
-        addListBtn.addEventListener('click', showListForm);
+        addListBtn.addEventListener('click', function() {
+            // Очищаем поле названия списка
+            listNameInput.value = '';
+            listModal.style.display = 'flex';
+            listNameInput.focus();
+        });
     }
-    if (addListTextBtn) {
-        addListTextBtn.addEventListener('click', showListForm);
+    
+    if (cancelList) {
+        cancelList.addEventListener('click', function() {
+            listModal.style.display = 'none';
+            listNameInput.value = '';
+        });
     }
-
-    if (cancelListBtn) {
-        cancelListBtn.addEventListener('click', hideListForm);
-    }
-
-    if (saveListBtn) {
-        saveListBtn.addEventListener('click', createList);
-    }
-
-    if (newListName) {
-        newListName.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                createList();
+    
+    if (listForm) {
+        listForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const listName = listNameInput.value.trim();
+            if (listName) {
+                fetch('/api/lists', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: listName
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    listNameInput.value = '';
+                    listModal.style.display = 'none';
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error creating list:', error);
+                });
             }
         });
     }
-
-    // Archive list buttons
-    document.querySelectorAll('.archive-list-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const listId = this.getAttribute('data-list-id');
-            archiveList(listId);
-        });
-    });
-}
-
-function showListForm() {
-    const addListBtn = document.getElementById('add-list-text-btn');
-    const addListForm = document.querySelector('.add-list-form');
     
-    if (addListBtn && addListForm) {
-        addListBtn.style.display = 'none';
-        addListForm.style.display = 'flex';
-        document.getElementById('new-list-name').focus();
-    }
-}
-
-function hideListForm() {
-    const addListBtn = document.getElementById('add-list-text-btn');
-    const addListForm = document.querySelector('.add-list-form');
-    
-    if (addListBtn && addListForm) {
-        addListBtn.style.display = 'block';
-        addListForm.style.display = 'none';
-        document.getElementById('new-list-name').value = '';
-    }
-}
-
-function createList() {
-    const listName = document.getElementById('new-list-name').value.trim();
-
-    if (!listName) {
-        alert('Please enter a list name');
-        return;
-    }
-
-    fetch('/api/lists', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            name: listName
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        hideListForm();
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('Error creating list:', error);
-        alert('Error creating list. Please try again.');
-    });
-}
-
-function archiveList(listId) {
-    if (!confirm('Are you sure you want to archive this list and all its cards?')) {
-        return;
-    }
-
-    fetch(`/api/lists/${listId}/archive`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('Error archiving list:', error);
-    });
-}
-
-// Card management
-function initializeCardManagement() {
-    // Add card buttons
-    document.querySelectorAll('.add-card-btn, .add-card-text-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const listId = this.getAttribute('data-list-id');
-            openCardModal(null, listId);
-        });
-    });
-
-    // Edit card buttons
-    document.querySelectorAll('.edit-card-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const cardId = this.getAttribute('data-card-id');
-            openCardModal(cardId);
-        });
-    });
-
-    // Archive card buttons
-    document.querySelectorAll('.archive-card-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const cardId = this.getAttribute('data-card-id');
-            archiveCard(cardId);
-        });
-    });
-
-    // Card click handlers
-    document.querySelectorAll('.card .card-content').forEach(cardContent => {
-        cardContent.addEventListener('click', function() {
-            const cardId = this.closest('.card').getAttribute('data-card-id');
-            openCardModal(cardId);
-        });
-    });
-
-    // Card form submission
-    document.getElementById('card-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        saveCard();
-    });
-}
-
-function openCardModal(cardId = null, listId = null) {
+    // Card creation
+    const addCardBtns = document.querySelectorAll('.add-card-btn, .add-card-text-btn');
     const cardModal = document.getElementById('card-modal');
-    const modalTitle = document.getElementById('card-modal-title');
+    const cancelCard = document.getElementById('cancel-card');
+    const cardForm = document.getElementById('card-form');
+    const cardListId = document.getElementById('card-list-id');
+    const cardTitleInput = document.getElementById('card-title');
+    const cardDescriptionInput = document.getElementById('card-description');
     
-    if (cardId) {
-        // Edit existing card
-        modalTitle.textContent = 'Edit Card';
-        loadCardData(cardId);
-        cardModal.setAttribute('data-card-id', cardId);
-    } else {
-        // Create new card
-        modalTitle.textContent = 'Add Card';
-        resetCardModal();
-        cardModal.setAttribute('data-list-id', listId);
-        cardModal.removeAttribute('data-card-id');
-    }
-    
-    cardModal.style.display = 'flex';
-    document.getElementById('card-title').focus();
-}
-
-function resetCardModal() {
-    document.getElementById('card-form').reset();
-    document.getElementById('card-id').value = '';
-    // Uncheck all labels
-    document.querySelectorAll('input[name="card-labels"]').forEach(checkbox => {
-        checkbox.checked = false;
+    addCardBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const listId = this.getAttribute('data-list-id');
+            cardListId.value = listId;
+            
+            // Очищаем поля формы
+            cardTitleInput.value = '';
+            cardDescriptionInput.value = '';
+            
+            cardModal.style.display = 'flex';
+            cardTitleInput.focus();
+        });
     });
-}
-
-function loadCardData(cardId) {
-    const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
-    if (cardElement) {
-        const title = cardElement.querySelector('.card-content h4').textContent;
-        const description = cardElement.querySelector('.card-content p')?.textContent || '';
-        
-        document.getElementById('card-title').value = title;
-        document.getElementById('card-description').value = description;
-        document.getElementById('card-id').value = cardId;
-        
-        // Load additional data would go here
-        // For now, we'll just load from the DOM
-    }
-}
-
-function saveCard() {
-    const cardId = document.getElementById('card-id').value;
-    const listId = document.getElementById('card-modal').getAttribute('data-list-id');
-    const title = document.getElementById('card-title').value.trim();
-    const description = document.getElementById('card-description').value;
-    const assigneeId = document.getElementById('card-assignee').value;
-    const dueDate = document.getElementById('card-due-date').value;
     
-    // Get selected labels
-    const selectedLabels = Array.from(document.querySelectorAll('input[name="card-labels"]:checked'))
-        .map(checkbox => checkbox.value);
-
-    if (!title) {
-        alert('Please enter a card title');
-        return;
-    }
-
-    const cardData = {
-        title: title,
-        description: description,
-        assignee_id: assigneeId || null,
-        due_date: dueDate || null,
-        label_ids: selectedLabels
-    };
-
-    let url, method;
-    
-    if (cardId) {
-        // Update existing card
-        url = `/api/cards/${cardId}`;
-        method = 'PUT';
-        // Remove label_ids for update as we have separate endpoints
-        delete cardData.label_ids;
-    } else {
-        // Create new card
-        url = `/api/lists/${listId}/cards`;
-        method = 'POST';
-    }
-
-    fetch(url, {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(cardData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('card-modal').style.display = 'none';
-        document.getElementById('card-form').reset();
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('Error saving card:', error);
-        alert('Error saving card. Please try again.');
-    });
-}
-
-function archiveCard(cardId) {
-    if (!confirm('Are you sure you want to archive this card?')) return;
-
-    fetch(`/api/cards/${cardId}/archive`, {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('Error archiving card:', error);
-    });
-}
-
-// Label management
-function initializeLabelManagement() {
-    const createLabelBtn = document.getElementById('create-label-btn');
-    const labelModal = document.getElementById('label-modal');
-    const cancelLabel = document.getElementById('cancel-label');
-    const labelForm = document.getElementById('label-form');
-
-    if (createLabelBtn) {
-        createLabelBtn.addEventListener('click', function() {
-            labelModal.style.display = 'flex';
+    if (cancelCard) {
+        cancelCard.addEventListener('click', function() {
+            cardModal.style.display = 'none';
+            cardTitleInput.value = '';
+            cardDescriptionInput.value = '';
         });
     }
-
-    if (cancelLabel) {
-        cancelLabel.addEventListener('click', function() {
-            labelModal.style.display = 'none';
-        });
-    }
-
-    if (labelForm) {
-        labelForm.addEventListener('submit', function(e) {
+    
+    if (cardForm) {
+        cardForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            createLabel();
+            
+            const cardTitle = cardTitleInput.value.trim();
+            const cardDescription = cardDescriptionInput.value;
+            const listId = cardListId.value;
+            
+            if (cardTitle) {
+                fetch(`/api/lists/${listId}/cards`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: cardTitle,
+                        description: cardDescription
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    cardTitleInput.value = '';
+                    cardDescriptionInput.value = '';
+                    cardModal.style.display = 'none';
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error creating card:', error);
+                });
+            }
         });
     }
-}
-
-function createLabel() {
-    const labelName = document.getElementById('label-name').value.trim();
-    const labelColor = document.getElementById('label-color').value;
-    const boardId = document.getElementById('current-board-id').value;
-
-    if (!labelName) {
-        alert('Please enter a label name');
-        return;
+    
+    // Edit card
+    const editCardBtns = document.querySelectorAll('.edit-card-btn');
+    const editCardModal = document.getElementById('edit-card-modal');
+    const cancelEditCard = document.getElementById('cancel-edit-card');
+    const editCardForm = document.getElementById('edit-card-form');
+    const editCardId = document.getElementById('edit-card-id');
+    const editCardTitleInput = document.getElementById('edit-card-title');
+    const editCardDescriptionInput = document.getElementById('edit-card-description');
+    
+    editCardBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const cardId = this.getAttribute('data-card-id');
+            const card = document.querySelector(`.card[data-card-id="${cardId}"]`);
+            const cardTitle = card.querySelector('.card-content h4').textContent;
+            const cardDescription = card.querySelector('.card-content p') ? card.querySelector('.card-content p').textContent : '';
+            
+            editCardTitleInput.value = cardTitle;
+            editCardDescriptionInput.value = cardDescription;
+            editCardId.value = cardId;
+            
+            editCardModal.style.display = 'flex';
+            editCardTitleInput.focus();
+        });
+    });
+    
+    if (cancelEditCard) {
+        cancelEditCard.addEventListener('click', function() {
+            editCardModal.style.display = 'none';
+            editCardTitleInput.value = '';
+            editCardDescriptionInput.value = '';
+        });
     }
-
-    fetch(`/api/boards/${boardId}/labels`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            name: labelName,
-            color: labelColor
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        document.getElementById('label-modal').style.display = 'none';
-        document.getElementById('label-form').reset();
-        window.location.reload();
-    })
-    .catch(error => {
-        console.error('Error creating label:', error);
-        alert('Error creating label. Please try again.');
+    
+    if (editCardForm) {
+        editCardForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const cardId = editCardId.value;
+            const cardTitle = editCardTitleInput.value.trim();
+            const cardDescription = editCardDescriptionInput.value;
+            
+            if (cardTitle) {
+                fetch(`/api/cards/${cardId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: cardTitle,
+                        description: cardDescription
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    editCardTitleInput.value = '';
+                    editCardDescriptionInput.value = '';
+                    editCardModal.style.display = 'none';
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error updating card:', error);
+                });
+            }
+        });
+    }
+    
+    // Delete card
+    const deleteCardBtns = document.querySelectorAll('.delete-card-btn');
+    deleteCardBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const cardId = this.getAttribute('data-card-id');
+            
+            if (confirm('Are you sure you want to delete this card?')) {
+                fetch(`/api/cards/${cardId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error deleting card:', error);
+                });
+            }
+        });
+    });
+    
+    // Delete list
+    const deleteListBtns = document.querySelectorAll('.delete-list-btn');
+    deleteListBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const listId = this.getAttribute('data-list-id');
+            
+            if (confirm('Are you sure you want to delete this list and all its cards?')) {
+                fetch(`/api/lists/${listId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload();
+                })
+                .catch(error => {
+                    console.error('Error deleting list:', error);
+                });
+            }
+        });
     });
 }
 
-// Drag and drop functionality
+// Drag and Drop functionality (остается без изменений)
 function initializeDragAndDrop() {
     let draggedCard = null;
+    let draggedCardElement = null;
 
-    document.addEventListener('dragstart', function(e) {
-        if (e.target.classList.contains('card')) {
-            draggedCard = e.target;
+    // Make all cards draggable
+    const cards = document.querySelectorAll('.card');
+    cards.forEach(card => {
+        card.setAttribute('draggable', 'true');
+        
+        card.addEventListener('dragstart', function(e) {
+            draggedCard = card;
+            draggedCardElement = card;
             setTimeout(() => {
-                e.target.classList.add('dragging');
+                card.classList.add('dragging');
             }, 0);
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', e.target.dataset.cardId);
-        }
-    });
+            e.dataTransfer.setData('text/plain', card.dataset.cardId);
+        });
 
-    document.addEventListener('dragend', function(e) {
-        if (e.target.classList.contains('card')) {
-            e.target.classList.remove('dragging');
+        card.addEventListener('dragend', function() {
+            card.classList.remove('dragging');
             draggedCard = null;
-        }
-    });
-
-    document.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        const cardsContainer = e.target.closest('.cards-container');
-        if (cardsContainer) {
-            e.dataTransfer.dropEffect = 'move';
-        }
-    });
-
-    document.addEventListener('drop', function(e) {
-        e.preventDefault();
-        const cardsContainer = e.target.closest('.cards-container');
-        
-        if (cardsContainer && draggedCard) {
-            const newListId = cardsContainer.dataset.listId;
-            const cardId = draggedCard.dataset.cardId;
+            draggedCardElement = null;
             
-            fetch(`/api/cards/${cardId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    list_id: newListId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Move card in DOM
-                cardsContainer.appendChild(draggedCard);
-                draggedCard.dataset.listId = newListId;
-            })
-            .catch(error => {
-                console.error('Error moving card:', error);
-                window.location.reload();
+            // Remove all drop zones
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.remove();
             });
+        });
+    });
+
+    // Make lists drop targets
+    const lists = document.querySelectorAll('.list');
+    lists.forEach(list => {
+        list.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            const afterElement = getDragAfterElement(list, e.clientY);
+            const cardsContainer = list.querySelector('.cards-container');
+            
+            // Remove existing drop zones
+            list.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.remove();
+            });
+            
+            if (afterElement) {
+                const dropZone = document.createElement('div');
+                dropZone.classList.add('drop-zone');
+                cardsContainer.insertBefore(dropZone, afterElement);
+            } else {
+                const dropZone = document.createElement('div');
+                dropZone.classList.add('drop-zone');
+                cardsContainer.appendChild(dropZone);
+            }
+        });
+
+        list.addEventListener('dragleave', function(e) {
+            // Only remove drop zones if not dragging over child elements
+            if (!list.contains(e.relatedTarget)) {
+                list.querySelectorAll('.drop-zone').forEach(zone => {
+                    zone.remove();
+                });
+            }
+        });
+
+        list.addEventListener('drop', function(e) {
+            e.preventDefault();
+            
+            if (draggedCard) {
+                const cardsContainer = list.querySelector('.cards-container');
+                const afterElement = getDragAfterElement(list, e.clientY);
+                const dropZones = list.querySelectorAll('.drop-zone');
+                
+                let newPosition = 0;
+                const cardsInList = Array.from(cardsContainer.querySelectorAll('.card:not(.dragging)'));
+                
+                if (afterElement) {
+                    const afterCard = afterElement.previousElementSibling;
+                    if (afterCard && afterCard.classList.contains('card')) {
+                        const afterCardPosition = parseInt(afterCard.dataset.position) || 0;
+                        newPosition = afterCardPosition + 1;
+                    }
+                } else if (cardsInList.length > 0) {
+                    const lastCard = cardsInList[cardsInList.length - 1];
+                    newPosition = (parseInt(lastCard.dataset.position) || 0) + 1;
+                }
+                
+                // Remove all drop zones
+                dropZones.forEach(zone => {
+                    zone.remove();
+                });
+                
+                // Move card to new list
+                const cardId = draggedCard.dataset.cardId;
+                const newListId = list.dataset.listId;
+                
+                fetch(`/api/cards/${cardId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        list_id: newListId,
+                        position: newPosition
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Move card in DOM
+                    if (afterElement) {
+                        cardsContainer.insertBefore(draggedCard, afterElement);
+                    } else {
+                        cardsContainer.appendChild(draggedCard);
+                    }
+                    
+                    // Update card's list ID
+                    draggedCard.dataset.listId = newListId;
+                    
+                    // Update positions of all cards in the list
+                    updateCardPositions(cardsContainer);
+                })
+                .catch(error => {
+                    console.error('Error moving card:', error);
+                    location.reload(); // Fallback to reload if something goes wrong
+                });
+            }
+        });
+    });
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
         }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function updateCardPositions(container) {
+    const cards = container.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.dataset.position = index;
     });
 }
