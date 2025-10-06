@@ -144,7 +144,7 @@
                             <select id="assignee-select" class="form-control" style="flex: 1;">
                                 <option value="">Select user...</option>
                             </select>
-                            <button type="button" id="add-assignee-btn" class="btn btn-secondary btn-sm">Assign</button>
+                            <button type="button" id="add-assignee-btn" class="btn btn-primary btn-sm">Assign</button>
                         </div>
                     </div>
                     
@@ -158,23 +158,23 @@
                             <select id="label-select" class="form-control" style="flex: 1;">
                                 <option value="">Select label...</option>
                             </select>
-                            <button type="button" id="add-label-btn" class="btn btn-secondary btn-sm">Add</button>
+                            <button type="button" id="add-label-btn" class="btn btn-primary btn-sm">Add</button>
                         </div>
-                        <button type="button" id="create-label-btn" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px;">
+                        <button type="button" id="create-label-btn" class="btn btn-primary btn-sm" style="width: 100%; margin-top: 8px;">
                             Create New Label
                         </button>
                     </div>
                     
                     <!-- Секция чек-листов -->
                     <div class="form-section">
-                        <h4>Checklists</h4>
-                        <div class="compact-container" id="checklists-container">
-                            <!-- Чек-листы будут добавляться здесь -->
-                        </div>
-                        <button type="button" id="add-checklist-btn" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px;">
-                            Add Checklist
-                        </button>
-                    </div>
+    <h4>Checklist</h4>
+    <div class="compact-container" id="checklists-container">
+        <!-- Список чекбоксов будет отображаться здесь -->
+    </div>
+    <div id="checklist-actions-container">
+        <!-- Форма добавления и кнопка создания будут здесь -->
+    </div>
+</div>
                     
                     <!-- Секция комментариев -->
                     <div class="form-section">
@@ -226,20 +226,4 @@
     </div>
 </div>
 
-<!-- Модальное окно для создания чек-листа -->
-<div id="checklist-modal" class="modal">
-    <div class="modal-content">
-        <h3>Create Checklist</h3>
-        <form id="checklist-form">
-            <div class="form-group">
-                <label for="checklist-title">Checklist Title:</label>
-                <input type="text" id="checklist-title" required placeholder="Enter checklist title...">
-            </div>
-            <div class="form-actions">
-                <button type="button" id="cancel-checklist" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Checklist</button>
-            </div>
-        </form>
-    </div>
-</div>
 {% endblock %}
