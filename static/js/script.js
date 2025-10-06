@@ -1,5 +1,6 @@
 // Main functionality
 document.addEventListener('DOMContentLoaded', function() {
+    initializeDirectDeleteHandlers();
     initializeDashboardFunctionality();
     initializeDragAndDrop();
     
@@ -10,6 +11,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+function initializeDirectDeleteHandlers() {
+    // Обработчики для удаления карточек
+    document.querySelectorAll('.delete-card-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cardId = this.getAttribute('data-card-id');
+            console.log('Direct handler - Delete card:', cardId);
+            deleteCard(cardId);
+        });
+    });
+    
+    // Обработчики для удаления списков
+    document.querySelectorAll('.delete-list-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const listId = this.getAttribute('data-list-id');
+            console.log('Direct handler - Delete list:', listId);
+            deleteList(listId);
+        });
+    });
+}
+
 
 function closeAllModals() {
     document.querySelectorAll('.modal').forEach(modal => {
@@ -65,6 +91,9 @@ function initializeDashboardFunctionality() {
                 });
             }
         });
+        setTimeout(() => {
+    reinitializeDragAndDrop();
+}, 500);
     }
     
     // Card creation
@@ -109,6 +138,9 @@ function initializeDashboardFunctionality() {
     
     // Инициализация обработчиков для нового функционала
     initializeCardDetailFunctionality();
+    
+    // Инициализация обработчиков для удаления
+    initializeDeleteHandlers(); // <-- ДОБАВЬТЕ ЭТУ СТРОЧКУ
 }
 
 function openCardDetailModal(cardId = null, listId = null) {
@@ -142,21 +174,24 @@ function openCardDetailModal(cardId = null, listId = null) {
 }
 
 function loadCardDetails(cardId) {
-    // Загружаем данные карточки
+    console.log('Loading card details for ID:', cardId);
+    
     fetch(`/api/cards/${cardId}`)
         .then(response => {
+            console.log('Response status:', response.status);
             if (!response.ok) {
-                throw new Error('Card not found');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(card => {
+            console.log('Card data received:', card);
+            
             document.getElementById('card-detail-title').value = card.title;
             document.getElementById('card-detail-description').value = card.description || '';
             document.getElementById('card-detail-list-id').value = card.list_id;
             
             if (card.due_date) {
-                // Конвертируем дату в формат для input[type=datetime-local]
                 const dueDate = new Date(card.due_date);
                 const localDateTime = dueDate.toISOString().slice(0, 16);
                 document.getElementById('card-detail-due-date').value = localDateTime;
@@ -168,12 +203,12 @@ function loadCardDetails(cardId) {
             loadCardAssignees(card);
             loadCardLabels(card);
             loadCardChecklists(card);
-            loadCardComments(card);
+            loadCardComments(card); // Эта функция теперь определена
             loadUsersAndLabels();
         })
         .catch(error => {
             console.error('Error loading card details:', error);
-            alert('Error loading card details');
+            alert('Error loading card details: ' + error.message);
         });
 }
 
@@ -224,17 +259,24 @@ function saveCardDetails() {
         document.getElementById('card-detail-modal').style.display = 'none';
         
         if (cardId) {
-            // Обновляем существующую карточку на дашборде без перезагрузки
             updateCardOnDashboard(cardId);
         } else {
             // Для новой карточки перезагружаем страницу
             location.reload();
         }
+        
+        // Переинициализируем drag & drop
+        setTimeout(reinitializeDragAndDrop, 100);
     })
     .catch(error => {
         console.error('Error saving card:', error);
         alert('Error saving card');
     });
+}
+
+function reinitializeDragAndDrop() {
+    console.log('🔄 Reinitializing drag and drop...');
+    initializeDragAndDrop();
 }
 
 // Функция для обновления карточки на дашборде без перезагрузки
@@ -494,16 +536,6 @@ function initializeCardDetailFunctionality() {
     });
     
     // Чек-листы
-    document.getElementById('add-checklist-btn').addEventListener('click', function() {
-        const cardId = document.getElementById('card-detail-id').value;
-        
-        if (!cardId) {
-            alert('Please save the card first before adding checklists');
-            return;
-        }
-        
-        document.getElementById('checklist-modal').style.display = 'flex';
-    });
     
     // Комментарии
     document.getElementById('add-comment-btn').addEventListener('click', function() {
@@ -546,6 +578,43 @@ function initializeCardDetailFunctionality() {
     initializeLabelModal();
     initializeChecklistModal();
 }
+
+
+
+// Функция для загрузки комментариев
+function loadCardComments(card) {
+    const container = document.getElementById('comments-container');
+    container.innerHTML = '';
+    
+    if (card.comments && card.comments.length > 0) {
+        card.comments.forEach(comment => {
+            const commentEl = document.createElement('div');
+            commentEl.className = 'comment-item';
+            const date = new Date(comment.created_at).toLocaleString();
+            commentEl.innerHTML = `
+                <div class="comment-author">${comment.user ? comment.user.username : 'Unknown'}</div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-date">${date}</div>
+            `;
+            container.appendChild(commentEl);
+        });
+    } else {
+        container.innerHTML = '<div class="no-data">No comments</div>';
+    }
+}
+
+// Функция для загрузки комментариев через API (отдельно)
+function loadCardCommentsFromAPI(cardId) {
+    fetch(`/api/cards/${cardId}`)
+        .then(response => response.json())
+        .then(card => {
+            loadCardComments(card);
+        })
+        .catch(error => {
+            console.error('Error loading comments:', error);
+        });
+}
+
 
 // Вспомогательные функции для загрузки данных
 function loadUsersAndLabels() {
@@ -635,78 +704,139 @@ function loadCardLabels(card) {
 
 function loadCardChecklists(card) {
     const container = document.getElementById('checklists-container');
-    container.innerHTML = '';
+    const actionsContainer = document.getElementById('checklist-actions-container');
     
+    container.innerHTML = '';
+    actionsContainer.innerHTML = '';
+
     if (card.checklists && card.checklists.length > 0) {
-        card.checklists.forEach(checklist => {
-            const checklistEl = document.createElement('div');
-            checklistEl.className = 'checklist';
-            let itemsHTML = '';
-            
-            if (checklist.items && checklist.items.length > 0) {
-                checklist.items.forEach(item => {
-                    itemsHTML += `
-                        <div class="checklist-item ${item.completed ? 'completed' : ''}">
-                            <input type="checkbox" ${item.completed ? 'checked' : ''} 
-                                   onchange="updateChecklistItem(${item.id}, this.checked)">
-                            <span>${item.text}</span>
+        // Берем первый чек-лист
+        const checklist = card.checklists[0];
+        
+        const checklistEl = document.createElement('div');
+        checklistEl.className = 'checklist';
+        
+        let itemsHTML = '';
+        if (checklist.items && checklist.items.length > 0) {
+            checklist.items.forEach(item => {
+                itemsHTML += `
+                    <div class="checklist-item ${item.completed ? 'completed' : ''}">
+                        <input type="checkbox" ${item.completed ? 'checked' : ''} 
+                               onchange="updateChecklistItem(${item.id}, this.checked)">
+                        <span>${item.text}</span>
+                        <div class="checklist-item-actions">
+                            <button type="button" class="remove-checklist-item" onclick="deleteChecklistItem(${item.id})">×</button>
                         </div>
-                    `;
-                });
-            }
-            
-            checklistEl.innerHTML = `
-                <div class="checklist-header">
-                    <h4>${checklist.title}</h4>
-                    <button type="button" class="delete-checklist" onclick="deleteChecklist(${checklist.id})">Delete</button>
-                </div>
-                ${itemsHTML}
-                <div class="add-checklist-item">
-                    <input type="text" placeholder="Add an item..." id="new-item-${checklist.id}">
-                    <button type="button" onclick="addChecklistItem(${checklist.id})">Add</button>
-                </div>
-            `;
-            container.appendChild(checklistEl);
-        });
+                    </div>
+                `;
+            });
+        }
+        
+        checklistEl.innerHTML = `
+            <div class="checklist-header">
+                <h4>Checklist</h4>
+                ${checklist.items && checklist.items.length > 0 ? 
+                    `<button type="button" class="delete-checklist btn btn-secondary btn-sm" onclick="deleteChecklist(${checklist.id})">Delete All</button>` : 
+                    ''
+                }
+            </div>
+            <div class="checklist-items">
+                ${itemsHTML || '<div class="no-data">No items yet</div>'}
+            </div>
+        `;
+        container.appendChild(checklistEl);
+
+        // Форму добавления помещаем в actionsContainer (вне compact-container)
+        actionsContainer.innerHTML = `
+            <div class="add-item-form">
+                <input type="text" id="new-checklist-item" placeholder="Add an item..." class="form-control">
+                <button type="button" onclick="addChecklistItem(${checklist.id})" class="btn btn-primary btn-sm">Add Item</button>
+            </div>
+        `;
     } else {
-        container.innerHTML = '<div class="no-data">No checklists</div>';
+        // Если чек-листа нет, показываем кнопку для создания
+        actionsContainer.innerHTML = `
+            <div class="no-checklist">
+                <button type="button" id="create-first-checklist" class="btn btn-primary">Create Checklist</button>
+            </div>
+        `;
+        
+        document.getElementById('create-first-checklist').addEventListener('click', function() {
+            const cardId = document.getElementById('card-detail-id').value;
+            createFirstChecklist(cardId);
+        });
     }
 }
 
-function loadCardComments(card) {
-    const container = document.getElementById('comments-container');
-    container.innerHTML = '';
-    
-    if (card.comments && card.comments.length > 0) {
-        card.comments.forEach(comment => {
-            const commentEl = document.createElement('div');
-            commentEl.className = 'comment-item';
-            const date = new Date(comment.created_at).toLocaleString();
-            commentEl.innerHTML = `
-                <div class="comment-author">${comment.user ? comment.user.username : 'Unknown'}</div>
-                <div class="comment-text">${comment.text}</div>
-                <div class="comment-date">${date}</div>
-            `;
-            container.appendChild(commentEl);
-        });
-    } else {
-        container.innerHTML = '<div class="no-data">No comments</div>';
+// Создать первый чек-лист для карточки
+function createFirstChecklist(cardId) {
+    if (!cardId) {
+        alert('Please save the card first');
+        return;
     }
-}
 
-// Функция для загрузки комментариев через API (отдельно)
-function loadCardCommentsFromAPI(cardId) {
-    fetch(`/api/cards/${cardId}`)
-        .then(response => response.json())
-        .then(card => {
-            loadCardComments(card);
+    fetch(`/api/cards/${cardId}/checklists`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            title: 'Checklist'
         })
-        .catch(error => {
-            console.error('Error loading comments:', error);
-        });
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to create checklist');
+        }
+        return response.json();
+    })
+    .then(checklist => {
+        // После создания чек-листа, загружаем обновленные данные карточки
+        loadCardDetails(cardId);
+    })
+    .catch(error => {
+        console.error('Error creating checklist:', error);
+        alert('Error creating checklist');
+    });
 }
 
-// Функции для работы с чек-листами
+// Добавить пункт в чек-лист
+function addChecklistItem(checklistId) {
+    const input = document.getElementById('new-checklist-item');
+    const text = input.value.trim();
+    
+    if (!text) {
+        alert('Please enter item text');
+        return;
+    }
+    
+    fetch(`/api/checklists/${checklistId}/items`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            text: text
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to add checklist item');
+        }
+        return response.json();
+    })
+    .then(() => {
+        input.value = ''; // Очищаем поле ввода
+        const cardId = document.getElementById('card-detail-id').value;
+        loadCardDetails(cardId);
+    })
+    .catch(error => {
+        console.error('Error adding checklist item:', error);
+        alert('Error adding checklist item: ' + error.message);
+    });
+}
+
+// Обновить статус пункта чек-листа
 function updateChecklistItem(itemId, completed) {
     fetch(`/api/checklist-items/${itemId}`, {
         method: 'PUT',
@@ -724,9 +854,9 @@ function updateChecklistItem(itemId, completed) {
         return response.json();
     })
     .then(() => {
-        // Обновляем отображение
+        // Обновляем отображение на дашборде
         const cardId = document.getElementById('card-detail-id').value;
-        loadCardDetails(cardId);
+        updateCardOnDashboard(cardId);
     })
     .catch(error => {
         console.error('Error updating checklist item:', error);
@@ -734,40 +864,32 @@ function updateChecklistItem(itemId, completed) {
     });
 }
 
-function addChecklistItem(checklistId) {
-    const input = document.getElementById(`new-item-${checklistId}`);
-    const text = input.value.trim();
-    
-    if (text) {
-        fetch(`/api/checklists/${checklistId}/items`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                text: text
-            })
+// Удалить пункт чек-листа
+function deleteChecklistItem(itemId) {
+    if (confirm('Are you sure you want to delete this item?')) {
+        fetch(`/api/checklist-items/${itemId}`, {
+            method: 'DELETE'
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Failed to add checklist item');
+                throw new Error('Failed to delete checklist item');
             }
             return response.json();
         })
         .then(() => {
-            input.value = '';
             const cardId = document.getElementById('card-detail-id').value;
             loadCardDetails(cardId);
         })
         .catch(error => {
-            console.error('Error adding checklist item:', error);
-            alert('Error adding checklist item');
+            console.error('Error deleting checklist item:', error);
+            alert('Error deleting checklist item');
         });
     }
 }
 
+// Удалить чек-лист
 function deleteChecklist(checklistId) {
-    if (confirm('Are you sure you want to delete this checklist?')) {
+    if (confirm('Are you sure you want to delete this checklist and all its items?')) {
         fetch(`/api/checklists/${checklistId}`, {
             method: 'DELETE'
         })
@@ -879,138 +1001,123 @@ function initializeChecklistModal() {
 
 // Drag and Drop functionality (остается без изменений)
 function initializeDragAndDrop() {
+    console.log('🚀 Initializing drag and drop...');
+    
     let draggedCard = null;
-    let draggedCardElement = null;
+    let startList = null;
 
-    // Make all cards draggable
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.setAttribute('draggable', 'true');
+    // Делаем все карточки перетаскиваемыми
+    document.addEventListener('dragstart', function(e) {
+        const card = e.target.closest('.card');
+        if (!card) return;
         
-        card.addEventListener('dragstart', function(e) {
-            draggedCard = card;
-            draggedCardElement = card;
-            setTimeout(() => {
-                card.classList.add('dragging');
-            }, 0);
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', card.dataset.cardId);
-        });
+        console.log('📦 Drag started:', card.dataset.cardId);
+        
+        draggedCard = card;
+        startList = card.closest('.list');
+        
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', card.dataset.cardId);
+        
+        // Визуальный эффект
+        setTimeout(() => {
+            card.style.opacity = '0.4';
+        }, 0);
+    });
 
-        card.addEventListener('dragend', function() {
-            card.classList.remove('dragging');
-            draggedCard = null;
-            draggedCardElement = null;
-            
-            // Remove all drop zones
-            document.querySelectorAll('.drop-zone').forEach(zone => {
-                zone.remove();
-            });
+    document.addEventListener('dragend', function(e) {
+        if (!draggedCard) return;
+        
+        console.log('🏁 Drag ended');
+        draggedCard.style.opacity = '1';
+        draggedCard = null;
+        startList = null;
+        
+        // Убираем все индикаторы
+        document.querySelectorAll('.drag-over').forEach(el => {
+            el.classList.remove('drag-over');
         });
     });
 
-    // Make lists drop targets
-    const lists = document.querySelectorAll('.list');
-    lists.forEach(list => {
-        list.addEventListener('dragover', function(e) {
-            e.preventDefault();
+    // Обработка перетаскивания над списками
+    document.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        if (!draggedCard) return;
+        
+        const list = e.target.closest('.list');
+        if (list && list !== startList) {
             e.dataTransfer.dropEffect = 'move';
+            list.classList.add('drag-over');
+        }
+    });
+
+    document.addEventListener('dragleave', function(e) {
+        if (!draggedCard) return;
+        
+        const list = e.target.closest('.list');
+        if (list && !list.contains(e.relatedTarget)) {
+            list.classList.remove('drag-over');
+        }
+    });
+
+    // Обработка отпускания
+    document.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (!draggedCard) return;
+        
+        const list = e.target.closest('.list');
+        if (list && list !== startList) {
+            console.log('🎯 Dropped on list:', list.dataset.listId);
             
-            const afterElement = getDragAfterElement(list, e.clientY);
+            const cardId = draggedCard.dataset.cardId;
+            const newListId = list.dataset.listId;
             const cardsContainer = list.querySelector('.cards-container');
             
-            // Remove existing drop zones
-            list.querySelectorAll('.drop-zone').forEach(zone => {
-                zone.remove();
-            });
+            // Визуально перемещаем карточку
+            cardsContainer.appendChild(draggedCard);
+            draggedCard.dataset.listId = newListId;
             
-            if (afterElement) {
-                const dropZone = document.createElement('div');
-                dropZone.classList.add('drop-zone');
-                cardsContainer.insertBefore(dropZone, afterElement);
-            } else {
-                const dropZone = document.createElement('div');
-                dropZone.classList.add('drop-zone');
-                cardsContainer.appendChild(dropZone);
-            }
-        });
-
-        list.addEventListener('dragleave', function(e) {
-            // Only remove drop zones if not dragging over child elements
-            if (!list.contains(e.relatedTarget)) {
-                list.querySelectorAll('.drop-zone').forEach(zone => {
-                    zone.remove();
-                });
-            }
-        });
-
-        list.addEventListener('drop', function(e) {
-            e.preventDefault();
+            // Убираем подсветку
+            list.classList.remove('drag-over');
             
-            if (draggedCard) {
-                const cardsContainer = list.querySelector('.cards-container');
-                const afterElement = getDragAfterElement(list, e.clientY);
-                const dropZones = list.querySelectorAll('.drop-zone');
-                
-                let newPosition = 0;
-                const cardsInList = Array.from(cardsContainer.querySelectorAll('.card:not(.dragging)'));
-                
-                if (afterElement) {
-                    const afterCard = afterElement.previousElementSibling;
-                    if (afterCard && afterCard.classList.contains('card')) {
-                        const afterCardPosition = parseInt(afterCard.dataset.position) || 0;
-                        newPosition = afterCardPosition + 1;
-                    }
-                } else if (cardsInList.length > 0) {
-                    const lastCard = cardsInList[cardsInList.length - 1];
-                    newPosition = (parseInt(lastCard.dataset.position) || 0) + 1;
+            // Отправляем запрос на сервер
+            fetch(`/api/cards/${cardId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    list_id: parseInt(newListId),
+                    position: cardsContainer.children.length - 1
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                
-                // Remove all drop zones
-                dropZones.forEach(zone => {
-                    zone.remove();
-                });
-                
-                // Move card to new list
-                const cardId = draggedCard.dataset.cardId;
-                const newListId = list.dataset.listId;
-                
-                fetch(`/api/cards/${cardId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        list_id: newListId,
-                        position: newPosition
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Move card in DOM
-                    if (afterElement) {
-                        cardsContainer.insertBefore(draggedCard, afterElement);
-                    } else {
-                        cardsContainer.appendChild(draggedCard);
-                    }
-                    
-                    // Update card's list ID
-                    draggedCard.dataset.listId = newListId;
-                    
-                    // Update positions of all cards in the list
-                    updateCardPositions(cardsContainer);
-                })
-                .catch(error => {
-                    console.error('Error moving card:', error);
-                    location.reload(); // Fallback to reload if something goes wrong
-                });
-            }
-        });
+                return response.json();
+            })
+            .then(data => {
+                console.log('✅ Card moved successfully');
+                showNotification('Card moved successfully');
+            })
+            .catch(error => {
+                console.error('❌ Error moving card:', error);
+                // Возвращаем обратно при ошибке
+                if (startList) {
+                    startList.querySelector('.cards-container').appendChild(draggedCard);
+                    draggedCard.dataset.listId = startList.dataset.listId;
+                }
+                showNotification('Error moving card', true);
+            });
+        }
     });
+
+    console.log('✅ Drag and drop initialized');
 }
 
 function getDragAfterElement(container, y) {
-    const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
+    const draggableElements = Array.from(container.querySelectorAll('.card:not(.dragging)'));
     
     return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
@@ -1025,8 +1132,95 @@ function getDragAfterElement(container, y) {
 }
 
 function updateCardPositions(container) {
+    if (!container) return;
+    
     const cards = container.querySelectorAll('.card');
     cards.forEach((card, index) => {
         card.dataset.position = index;
     });
+}
+
+// ==================== УДАЛЕНИЕ КАРТОЧЕК И СПИСКОВ ====================
+
+// ==================== ФУНКЦИИ УДАЛЕНИЯ ====================
+
+// Удаление карточки
+function deleteCard(cardId) {
+    console.log('Deleting card:', cardId);
+    
+    if (confirm('Are you sure you want to delete this card?')) {
+        fetch(`/api/cards/${cardId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete card');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Card deleted successfully');
+            const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+            if (cardElement) {
+                cardElement.remove();
+            }
+            showNotification('Card deleted successfully');
+            // Переинициализируем drag & drop
+            setTimeout(reinitializeDragAndDrop, 100);
+        })
+        .catch(error => {
+            console.error('Error deleting card:', error);
+            alert('Error deleting card: ' + error.message);
+        });
+    }
+}
+
+// Удаление списка
+function deleteList(listId) {
+    console.log('Deleting list:', listId);
+    
+    if (confirm('Are you sure you want to delete this list and all its cards?')) {
+        fetch(`/api/lists/${listId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to delete list');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('List deleted successfully');
+            // Удаляем список из DOM
+            const listElement = document.querySelector(`.list[data-list-id="${listId}"]`);
+            if (listElement) {
+                listElement.remove();
+            }
+            // Показываем уведомление
+            showNotification('List deleted successfully');
+        })
+        .catch(error => {
+            console.error('Error deleting list:', error);
+            alert('Error deleting list: ' + error.message);
+        });
+    }
+}
+
+function showNotification(message, isError = false) {
+    // Remove existing notifications
+    document.querySelectorAll('.notification').forEach(notification => {
+        notification.remove();
+    });
+    
+    const notification = document.createElement('div');
+    notification.className = `notification ${isError ? 'error' : 'success'}`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
 }

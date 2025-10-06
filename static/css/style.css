@@ -111,7 +111,7 @@ body {
     gap: 0.25rem;
 }
 
-.list-actions button {
+.add-card-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -195,6 +195,17 @@ body {
 .delete-card-btn {
     background: #cf513d;
     color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0.25rem;
+    border-radius: 3px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Add Card Button */
@@ -264,7 +275,7 @@ body {
     background: white;
     padding: 1.5rem;
     border-radius: 8px;
-    width: 480px;
+    width: 900px;
     max-width: 90vw;
 }
 
@@ -717,4 +728,283 @@ body {
 
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
+}
+
+/* Стили для чек-листов */
+/* Стили для чек-листов */
+/* Стили для чек-листов */
+.checklist {
+    margin-bottom: 0;
+}
+
+.checklist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0 0.25rem;
+}
+
+.checklist-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #172b4d;
+    font-weight: 600;
+}
+
+.checklist-items {
+    margin-bottom: 0;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 6px;
+    transition: all 0.2s ease;
+}
+
+.checklist-item:hover {
+    background: #f8f9fa;
+}
+
+.checklist-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.checklist-item span {
+    flex: 1;
+    font-size: 0.875rem;
+    color: #172b4d;
+}
+
+.checklist-item.completed {
+    background: #f8fff8;
+    border-color: #d4edda;
+}
+
+.checklist-item.completed span {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+.checklist-item-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.checklist-item:hover .checklist-item-actions {
+    opacity: 1;
+}
+
+.remove-checklist-item {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6c778c;
+    font-size: 1.2rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    line-height: 1;
+}
+
+.remove-checklist-item:hover {
+    background: #ebecf0;
+    color: #de350b;
+}
+
+/* Форма добавления теперь вне compact-container */
+.add-item-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 12px 0;
+    border-top: 1px solid #e9ecef;
+}
+
+.add-item-form input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #dfe1e6;
+    border-radius: 3px;
+    font-size: 0.875rem;
+}
+
+.add-item-form input:focus {
+    outline: none;
+    border-color: #0079bf;
+}
+
+.no-checklist {
+    text-align: center;
+    padding: 1rem;
+    color: #6b778c;
+}
+
+.no-checklist button {
+    width: 100%;
+}
+
+.no-data {
+    color: #6b778c;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.875rem;
+}
+
+/* Улучшаем compact-container */
+.compact-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    background: white;
+    margin-bottom: 0;
+}
+
+/* Контейнер для действий чек-листа */
+#checklist-actions-container {
+    margin-top: 0.5rem;
+}
+
+/* Стили для кнопок удаления */
+.delete-list-btn {
+    background: #cf513d;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: white;
+    padding: 0.25rem;
+    border-radius: 3px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-card-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: #6b778c;
+    padding: 0.25rem;
+    border-radius: 3px;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-card-btn:hover, .delete-list-btn:hover {
+    background: rgba(0,0,0,0.1);
+    color: #172b4d;
+}
+
+.card-actions, .list-actions {
+    display: none;
+}
+
+.card:hover .card-actions,
+.list-header:hover .list-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* Добавьте в ваш CSS файл */
+.card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.drop-zone {
+    height: 4px;
+    background-color: #0079bf;
+    margin: 2px 0;
+    border-radius: 2px;
+    transition: all 0.2s;
+}
+
+.list.drag-over {
+    background-color: #f0f8ff;
+    border: 2px dashed #0079bf;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    z-index: 10000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    font-size: 14px;
+    color: white;
+}
+
+.card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.list.drag-over {
+    background-color: #f0f8ff;
+    border: 2px dashed #0079bf;
+    border-radius: 4px;
+}
+
+.drop-zone {
+    height: 4px;
+    background-color: #0079bf;
+    margin: 2px 0;
+    border-radius: 2px;
+    transition: all 0.2s ease;
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    z-index: 10000;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    animation: slideIn 0.3s ease;
+}
+
+.notification.success {
+    background-color: #4CAF50;
+}
+
+.notification.error {
+    background-color: #f44336;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
