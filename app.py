@@ -125,21 +125,59 @@ def get_users():
 @app.route('/api/labels')
 @login_required
 def get_labels():
-    labels = Label.query.filter_by(user_id=current_user.id).all()
-    return jsonify([{'id': label.id, 'name': label.name, 'color': label.color} for label in labels])
+    try:
+        print(f"🔵 [DEBUG] Getting labels for user {current_user.id} ({current_user.username})")
+        labels = Label.query.filter_by(user_id=current_user.id).all()
+        print(f"✅ [DEBUG] Found {len(labels)} labels for user {current_user.id}")
+        
+        for label in labels:
+            print(f"   - Label: ID={label.id}, Name='{label.name}', Color='{label.color}'")
+        
+        return jsonify([{'id': label.id, 'name': label.name, 'color': label.color} for label in labels])
+    
+    except Exception as e:
+        print(f"❌ [DEBUG] Error getting labels: {str(e)}")
+        return jsonify({'error': 'Failed to get labels'}), 500
 
 @app.route('/api/labels', methods=['POST'])
 @login_required
 def create_label():
-    data = request.get_json()
-    label = Label(
-        name=data['name'],
-        color=data['color'],
-        user_id=current_user.id
-    )
-    db.session.add(label)
-    db.session.commit()
-    return jsonify({'id': label.id, 'name': label.name, 'color': label.color})
+    try:
+        print(f"🔵 [DEBUG] Creating label for user {current_user.id} ({current_user.username})")
+        data = request.get_json()
+        print(f"📨 [DEBUG] Received data: {data}")
+        
+        if not data:
+            print("❌ [DEBUG] No JSON data received")
+            return jsonify({'error': 'No data provided'}), 400
+            
+        if 'name' not in data or 'color' not in data:
+            print("❌ [DEBUG] Missing required fields")
+            return jsonify({'error': 'Name and color are required'}), 400
+        
+        label = Label(
+            name=data['name'],
+            color=data['color'],
+            user_id=current_user.id
+        )
+        db.session.add(label)
+        db.session.commit()
+        
+        print(f"✅ [DEBUG] Label created successfully: ID={label.id}, Name='{label.name}', Color='{label.color}'")
+        
+        # Проверим, действительно ли метка сохранилась в БД
+        saved_label = Label.query.get(label.id)
+        if saved_label:
+            print(f"✅ [DEBUG] Label verified in DB: {saved_label.name}")
+        else:
+            print("❌ [DEBUG] Label NOT found in DB after creation!")
+        
+        return jsonify({'id': label.id, 'name': label.name, 'color': label.color})
+    
+    except Exception as e:
+        print(f"❌ [DEBUG] Error creating label: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': f'Failed to create label: {str(e)}'}), 500
 
 @app.route('/api/cards/<int:card_id>/labels', methods=['POST'])
 @login_required
@@ -251,18 +289,25 @@ def create_checklist_item(checklist_id):
 @app.route('/api/checklist-items/<int:item_id>', methods=['PUT'])
 @login_required
 def update_checklist_item(item_id):
+    print(f"🔄 Updating checklist item {item_id}")
+    
     item = ChecklistItem.query.get_or_404(item_id)
     checklist = Checklist.query.get(item.checklist_id)
     card = Card.query.get(checklist.card_id)
+    
+    # Проверяем, что карточка принадлежит текущему пользователю
     list_obj = List.query.filter_by(id=card.list_id, user_id=current_user.id).first_or_404()
     
     data = request.get_json()
+    print(f"📨 Received data: {data}")
+    
     if 'completed' in data:
         item.completed = data['completed']
-    if 'text' in data:
-        item.text = data['text']
+        print(f"✅ Set completed to: {item.completed}")
     
     db.session.commit()
+    print("💾 Changes committed to database")
+    
     return jsonify({'message': 'Checklist item updated'})
 
 @app.route('/api/checklists/<int:checklist_id>', methods=['DELETE'])
@@ -275,6 +320,20 @@ def delete_checklist(checklist_id):
     db.session.delete(checklist)
     db.session.commit()
     return jsonify({'message': 'Checklist deleted'})
+
+@app.route('/api/checklist-items/<int:item_id>', methods=['DELETE'])
+@login_required
+def delete_checklist_item(item_id):
+    item = ChecklistItem.query.get_or_404(item_id)
+    checklist = Checklist.query.get(item.checklist_id)
+    card = Card.query.get(checklist.card_id)
+    
+    # Проверяем, что карточка принадлежит текущему пользователю
+    list_obj = List.query.filter_by(id=card.list_id, user_id=current_user.id).first_or_404()
+    
+    db.session.delete(item)
+    db.session.commit()
+    return jsonify({'message': 'Checklist item deleted'})
 
 # API Routes для комментариев
 @app.route('/api/cards/<int:card_id>/comments', methods=['POST'])
