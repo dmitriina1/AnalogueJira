@@ -1128,6 +1128,27 @@ function initializeDragAndDrop() {
             }
             
             e.dataTransfer.dropEffect = 'move';
+            list.classList.add('drag-over');
+        }
+    });
+
+    document.addEventListener('dragleave', function(e) {
+        if (!draggedCard) return;
+        
+        const list = e.target.closest('.list');
+        if (list && !list.contains(e.relatedTarget)) {
+            list.classList.remove('drag-over');
+        }
+    });
+
+    // Обработка отпускания
+    document.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (!draggedCard) return;
+        
+        const list = e.target.closest('.list');
+        if (list && list !== startList) {
+            console.log('🎯 Dropped on list:', list.dataset.listId);
             
             // Подсвечиваем список
             if (targetList && targetList !== currentDropTarget) {
