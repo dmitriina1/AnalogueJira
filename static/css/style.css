@@ -401,3 +401,320 @@ body {
     border-radius: 4px;
     min-height: 40px;
 }
+
+/* Добавьте эти стили к существующему CSS */
+
+/* Метки карточки */
+.card-labels {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.card-label {
+    height: 8px;
+    width: 40px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* Бэйджи карточки */
+.card-badges {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.badge {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    background: #f4f5f7;
+    color: #5e6c84;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.badge.overdue {
+    background: #eb5a46;
+    color: white;
+}
+
+.badge.due-date {
+    background: #f2d600;
+    color: #172b4d;
+}
+
+/* Назначенные пользователи */
+.card-assignees {
+    display: flex;
+    gap: 2px;
+    margin-top: 8px;
+}
+
+.assignee-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #0079bf;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+/* Стили для модального окна деталей карточки */
+.form-control {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #dfe1e6;
+    border-radius: 3px;
+    font-size: 0.875rem;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+}
+
+/* Контейнеры для динамического контента */
+.assignees-container,
+.labels-container,
+.checklists-container,
+.comments-container {
+    margin-bottom: 12px;
+    min-height: 20px;
+}
+
+.assignee-item,
+.label-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f4f5f7;
+    border-radius: 3px;
+    margin: 2px;
+    font-size: 0.8rem;
+}
+
+.label-item {
+    background: var(--label-color);
+    color: white;
+    font-weight: 500;
+}
+
+.remove-assignee,
+.remove-label {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: inherit;
+    opacity: 0.7;
+}
+
+.remove-assignee:hover,
+.remove-label:hover {
+    opacity: 1;
+}
+
+/* Чек-листы */
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-bottom: 1px solid #f4f5f7;
+}
+
+.checklist-item input[type="checkbox"] {
+    margin: 0;
+}
+
+.checklist-item.completed {
+    text-decoration: line-through;
+    color: #5e6c84;
+}
+
+.checklist-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* Комментарии */
+.comment-item {
+    padding: 12px;
+    border-bottom: 1px solid #f4f5f7;
+    margin-bottom: 8px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #172b4d;
+    margin-bottom: 4px;
+}
+
+.comment-text {
+    color: #5e6c84;
+    font-size: 0.875rem;
+}
+
+.comment-date {
+    font-size: 0.75rem;
+    color: #8993a4;
+}
+
+.new-comment {
+    margin-top: 12px;
+}
+
+.new-comment textarea {
+    min-height: 60px;
+    margin-bottom: 8px;
+}
+
+/* Адаптивность */
+.labels-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.labels-actions select {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .labels-actions {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        margin: 20px;
+        width: calc(100% - 40px);
+    }
+}
+
+/* Стили для модального окна с двумя колонками */
+.modal-content {
+    max-width: 900px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.card-modal-columns {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 1rem;
+}
+
+.left-column {
+    flex: 1;
+}
+
+.right-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-section {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.form-section h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Компактные стили для контейнеров */
+.compact-container {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.5rem;
+    background: white;
+}
+
+.assignee-item, .label-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f4f5f7;
+    border-radius: 3px;
+    margin: 2px;
+    font-size: 0.8rem;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    border-bottom: 1px solid #f4f5f7;
+    font-size: 0.85rem;
+}
+
+.comment-item {
+    padding: 8px;
+    border-bottom: 1px solid #f4f5f7;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+}
+
+/* Кнопки действий внизу модального окна */
+.modal-actions {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1rem 0;
+    border-top: 1px solid #e9ecef;
+    margin-top: 1rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .card-modal-columns {
+        flex-direction: column;
+    }
+    
+    .modal-content {
+        margin: 20px;
+        width: calc(100% - 40px);
+    }
+}
+
+/* Стили для скролла */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

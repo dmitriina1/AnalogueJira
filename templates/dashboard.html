@@ -20,12 +20,60 @@
             <div class="cards-container" data-list-id="{{ list.id }}">
                 {% for card in list.cards %}
                 <div class="card" draggable="true" data-card-id="{{ card.id }}" data-list-id="{{ list.id }}">
+                    <!-- Метки карточки -->
+                    {% if card.labels_list %}
+                    <div class="card-labels">
+                        {% for label in card.labels_list %}
+                        <span class="card-label" style="background-color: {{ label.color }};" title="{{ label.name }}"></span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
                     <div class="card-content">
                         <h4>{{ card.title }}</h4>
                         {% if card.description %}
                         <p>{{ card.description }}</p>
                         {% endif %}
+                        
+                        <!-- Бэйджи карточки -->
+                        <div class="card-badges">
+                            {% if card.due_date %}
+                            <span class="badge due-date {% if card.due_date < now %}overdue{% endif %}">
+                                📅 {{ card.due_date.strftime('%d %b') }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if card.assignees_list %}
+                            <span class="badge assignees">
+                                👥 {{ card.assignees_list|length }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if card.checklists %}
+                            <span class="badge checklist">
+                                ✅ {{ card.completed_checklist_items }}/{{ card.total_checklist_items }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if card.comments %}
+                            <span class="badge comments">
+                                💬 {{ card.comments|length }}
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
+                    
+                    <!-- Назначенные пользователи -->
+                    {% if card.assignees_list %}
+                    <div class="card-assignees">
+                        {% for assignee in card.assignees_list %}
+                        <span class="assignee-avatar" title="{{ assignee.username }}">
+                            {{ assignee.username[0]|upper }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
                     <div class="card-actions">
                         <button class="edit-card-btn" data-card-id="{{ card.id }}">✎</button>
                         <button class="delete-card-btn" data-card-id="{{ card.id }}">×</button>
@@ -56,76 +104,142 @@
     </div>
 </div>
 
-<!-- Модальное окно для создания карточки -->
-<div id="card-modal" class="modal">
+<!-- Расширенное модальное окно для создания/редактирования карточки -->
+<!-- Расширенное модальное окно для создания/редактирования карточки -->
+<div id="card-detail-modal" class="modal">
     <div class="modal-content">
-        <h3>Create New Card</h3>
-        <form id="card-form">
-            <div class="form-group">
-                <label for="card-title">Title:</label>
-                <input type="text" id="card-title" required placeholder="Enter card title...">
+        <h3 id="card-modal-title">Edit Card</h3>
+        <form id="card-detail-form">
+            <input type="hidden" id="card-detail-id">
+            <input type="hidden" id="card-detail-list-id">
+            
+            <div class="card-modal-columns">
+                <!-- Левая колонка - основные поля -->
+                <div class="left-column">
+                    <div class="form-group">
+                        <label for="card-detail-title">Title:</label>
+                        <input type="text" id="card-detail-title" required placeholder="Enter card title...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="card-detail-description">Description:</label>
+                        <textarea id="card-detail-description" placeholder="Enter description..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="card-detail-due-date">Due Date:</label>
+                        <input type="datetime-local" id="card-detail-due-date">
+                    </div>
+                </div>
+                
+                <!-- Правая колонка - дополнительные функции (скрыта при создании) -->
+                <div class="right-column form-section">
+                    <!-- Секция назначений -->
+                    <div class="form-section">
+                        <h4>Assignees</h4>
+                        <div class="compact-container" id="assignees-container">
+                            <!-- Назначенные пользователи будут добавляться здесь -->
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <select id="assignee-select" class="form-control" style="flex: 1;">
+                                <option value="">Select user...</option>
+                            </select>
+                            <button type="button" id="add-assignee-btn" class="btn btn-secondary btn-sm">Assign</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Секция меток -->
+                    <div class="form-section">
+                        <h4>Labels</h4>
+                        <div class="compact-container" id="labels-container">
+                            <!-- Метки будут добавляться здесь -->
+                        </div>
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <select id="label-select" class="form-control" style="flex: 1;">
+                                <option value="">Select label...</option>
+                            </select>
+                            <button type="button" id="add-label-btn" class="btn btn-secondary btn-sm">Add</button>
+                        </div>
+                        <button type="button" id="create-label-btn" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px;">
+                            Create New Label
+                        </button>
+                    </div>
+                    
+                    <!-- Секция чек-листов -->
+                    <div class="form-section">
+                        <h4>Checklists</h4>
+                        <div class="compact-container" id="checklists-container">
+                            <!-- Чек-листы будут добавляться здесь -->
+                        </div>
+                        <button type="button" id="add-checklist-btn" class="btn btn-secondary btn-sm" style="width: 100%; margin-top: 8px;">
+                            Add Checklist
+                        </button>
+                    </div>
+                    
+                    <!-- Секция комментариев -->
+                    <div class="form-section">
+                        <h4>Comments</h4>
+                        <div class="compact-container" id="comments-container">
+                            <!-- Комментарии будут добавляться здесь -->
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <textarea id="new-comment-text" placeholder="Write a comment..." class="form-control" style="height: 60px; margin-bottom: 8px;"></textarea>
+                            <button type="button" id="add-comment-btn" class="btn btn-primary btn-sm" style="width: 100%;">
+                                Add Comment
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="card-description">Description:</label>
-                <textarea id="card-description" placeholder="Enter description..."></textarea>
-            </div>
-            <input type="hidden" id="card-list-id">
-            <div class="form-actions">
-                <button type="button" id="cancel-card" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Card</button>
+            
+            <!-- Кнопки действий -->
+            <div class="modal-actions">
+                <div class="form-actions">
+                    <button type="button" id="cancel-card-detail" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Card</button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Модальное окно для редактирования карточки -->
-<div id="edit-card-modal" class="modal">
+<!-- Остальные модальные окна (label-modal, checklist-modal) остаются без изменений -->
+
+<!-- Модальное окно для создания метки -->
+<div id="label-modal" class="modal">
     <div class="modal-content">
-        <h3>Edit Card</h3>
-        <form id="edit-card-form">
+        <h3>Create New Label</h3>
+        <form id="label-form">
             <div class="form-group">
-                <label for="edit-card-title">Title:</label>
-                <input type="text" id="edit-card-title" required>
+                <label for="label-name">Label Name:</label>
+                <input type="text" id="label-name" required placeholder="Enter label name...">
             </div>
             <div class="form-group">
-                <label for="edit-card-description">Description:</label>
-                <textarea id="edit-card-description"></textarea>
+                <label for="label-color">Color:</label>
+                <input type="color" id="label-color" value="#0079bf">
             </div>
-            <input type="hidden" id="edit-card-id">
             <div class="form-actions">
-                <button type="button" id="cancel-edit-card" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" id="cancel-label" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Label</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для создания чек-листа -->
+<div id="checklist-modal" class="modal">
+    <div class="modal-content">
+        <h3>Create Checklist</h3>
+        <form id="checklist-form">
+            <div class="form-group">
+                <label for="checklist-title">Checklist Title:</label>
+                <input type="text" id="checklist-title" required placeholder="Enter checklist title...">
+            </div>
+            <div class="form-actions">
+                <button type="button" id="cancel-checklist" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Checklist</button>
             </div>
         </form>
     </div>
 </div>
 {% endblock %}
-
-{% for list in lists %}
-<div class="list" data-list-id="{{ list.id }}">
-    <div class="list-header">
-        <h3>{{ list.name }}</h3>
-        <div class="list-actions">
-            <button class="add-card-btn" data-list-id="{{ list.id }}">+</button>
-            <button class="delete-list-btn" data-list-id="{{ list.id }}">×</button>
-        </div>
-    </div>
-    <div class="cards-container" data-list-id="{{ list.id }}">
-        {% for card in list.cards %}
-        <div class="card" data-card-id="{{ card.id }}" data-list-id="{{ list.id }}" data-position="{{ card.position }}">
-            <div class="card-content">
-                <h4>{{ card.title }}</h4>
-                {% if card.description %}
-                <p>{{ card.description }}</p>
-                {% endif %}
-            </div>
-            <div class="card-actions">
-                <button class="edit-card-btn" data-card-id="{{ card.id }}">✎</button>
-                <button class="delete-card-btn" data-card-id="{{ card.id }}">×</button>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    <button class="add-card-text-btn" data-list-id="{{ list.id }}">+ Add another card</button>
-</div>
-{% endfor %}
