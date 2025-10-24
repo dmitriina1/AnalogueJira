@@ -43,8 +43,8 @@ class Project(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     creator_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
-    # Отношения
-    boards = db.relationship('Board', backref='project', lazy=True, cascade='all, delete-orphan')
+    # Связь one-to-one с доской
+    board = db.relationship('Board', backref='project_ref', uselist=False, cascade='all, delete-orphan')
     invitations = db.relationship('Invitation', backref='project', lazy=True, cascade='all, delete-orphan')
     members = db.relationship('ProjectMember', backref='project', lazy=True, cascade='all, delete-orphan')
     
@@ -57,8 +57,8 @@ class Project(db.Model):
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
             'member_count': len(self.members),
-            'board_count': len(self.boards),
-            'boards': [board.to_dict() for board in self.boards]  # ✅ Включаем доски
+            # ИСПРАВЛЕНО: используем self.board вместо self.boards
+            'boards': [self.board.to_dict()] if self.board else []
         }
 
 # Модель участников проекта
@@ -113,7 +113,7 @@ class Board(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -128,7 +128,7 @@ class Board(db.Model):
             'project_id': self.project_id,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
-            'lists': [lst.to_dict() for lst in self.lists]
+            'lists': [lst.to_dict() for lst in self.lists] if self.lists else []
         }
 
 # Модель списка на доске
@@ -149,7 +149,7 @@ class BoardList(db.Model):
             'position': self.position,
             'board_id': self.board_id,
             'created_at': self.created_at.isoformat(),
-            'cards': [card.to_dict() for card in self.cards]
+            'cards': [card.to_dict() for card in self.cards] if self.cards else []
         }
 
 # Модель карточки (задачи)
@@ -179,13 +179,13 @@ class Card(db.Model):
             'position': self.position,
             'due_date': self.due_date.isoformat() if self.due_date else None,
             'list_id': self.list_id,
-            'created_by': self.created_by.to_dict(),
+            'created_by': self.created_by.to_dict() if self.created_by else None,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
-            'assignees': [assignee.user.to_dict() for assignee in self.assignees],
-            'labels': [card_label.label.to_dict() for card_label in self.labels],
-            'checklists': [checklist.to_dict() for checklist in self.checklists],
-            'comments': [comment.to_dict() for comment in self.comments]
+            'assignees': [assignee.user.to_dict() for assignee in self.assignees] if self.assignees else [],
+            'labels': [card_label.label.to_dict() for card_label in self.labels] if self.labels else [],
+            'checklists': [checklist.to_dict() for checklist in self.checklists] if self.checklists else [],
+            'comments': [comment.to_dict() for comment in self.comments] if self.comments else []
         }
 
 # Модель назначенных пользователей на карточку
@@ -275,12 +275,15 @@ class Comment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # ДОБАВИТЬ это отношение:
+    author = db.relationship('User', foreign_keys=[author_id])
+    
     def to_dict(self):
         return {
             'id': self.id,
             'text': self.text,
             'card_id': self.card_id,
-            'author': self.author.to_dict(),
+            'author': self.author.to_dict() if self.author else None,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()
         }

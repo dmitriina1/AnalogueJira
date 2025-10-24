@@ -14,11 +14,10 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  horizontalListSortingStrategy,
   useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { cardsAPI, commentsAPI } from '../../services/api';
+import { boardsAPI, cardsAPI, commentsAPI } from '../../services/api';
 import { 
   Plus, 
   MessageSquare, 
@@ -319,79 +318,14 @@ const BoardView = () => {
 
   const loadBoardData = async () => {
     try {
-      // Временные данные для демонстрации
-      setTimeout(() => {
-        setBoard({
-          id: boardId,
-          name: 'Development Board',
-          description: 'Main development tasks',
-          lists: [
-            {
-              id: 1,
-              name: 'To Do',
-              position: 0,
-              cards: [
-                {
-                  id: 1,
-                  title: 'Setup development environment',
-                  description: 'Configure the development environment for the new project',
-                  position: 0,
-                  due_date: '2024-02-15',
-                  created_by: { username: 'admin', avatar_url: null },
-                  assignees: [],
-                  labels: [],
-                  checklists: [],
-                  comments: []
-                }
-              ]
-            },
-            {
-              id: 2,
-              name: 'In Progress',
-              position: 1,
-              cards: [
-                {
-                  id: 2,
-                  title: 'Design database schema',
-                  description: 'Create the initial database schema design',
-                  position: 0,
-                  due_date: '2024-02-10',
-                  created_by: { username: 'admin', avatar_url: null },
-                  assignees: [{ username: 'admin', avatar_url: null }],
-                  labels: [{ name: 'Backend', color: '#FF6B6B' }],
-                  checklists: [
-                    {
-                      id: 1,
-                      title: 'Database Tasks',
-                      items: [
-                        { id: 1, text: 'Design tables', completed: true },
-                        { id: 2, text: 'Define relationships', completed: false }
-                      ]
-                    }
-                  ],
-                  comments: [
-                    {
-                      id: 1,
-                      text: 'Started working on the schema design',
-                      author: { username: 'admin' },
-                      created_at: '2024-02-01T10:00:00Z'
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              id: 3,
-              name: 'Done',
-              position: 2,
-              cards: []
-            }
-          ]
-        });
-        setLoading(false);
-      }, 1000);
+      console.log('Loading board data for ID:', boardId);
+      const response = await boardsAPI.getBoard(boardId);
+      console.log('Board response:', response.data);
+      setBoard(response.data);
+      setLoading(false);
     } catch (error) {
       console.error('Error loading board:', error);
+      console.error('Error details:', error.response?.data);
       setLoading(false);
     }
   };
@@ -400,24 +334,17 @@ const BoardView = () => {
     e.preventDefault();
     try {
       const response = await cardsAPI.createCard(selectedList.id, cardForm);
+      console.log('Card created:', response.data);
       
-      setBoard(prev => ({
-        ...prev,
-        lists: prev.lists.map(list => 
-          list.id === selectedList.id 
-            ? { 
-                ...list, 
-                cards: [...(list.cards || []), { ...response.data, id: Date.now() }] 
-              }
-            : list
-        )
-      }));
+      // Reload board data to get the updated state
+      await loadBoardData();
       
       setCardForm({ title: '', description: '', due_date: '' });
       setShowCardModal(false);
       setSelectedList(null);
     } catch (error) {
       console.error('Error creating card:', error);
+      alert('Failed to create card');
     }
   };
 
@@ -426,34 +353,18 @@ const BoardView = () => {
     if (!commentText.trim()) return;
 
     try {
-      const response = await commentsAPI.addComment(selectedCard.id, commentText);
+      await commentsAPI.addComment(selectedCard.id, commentText);
       
-      setBoard(prev => ({
-        ...prev,
-        lists: prev.lists.map(list => ({
-          ...list,
-          cards: list.cards?.map(card =>
-            card.id === selectedCard.id
-              ? { 
-                  ...card, 
-                  comments: [...(card.comments || []), response.data] 
-                }
-              : card
-          )
-        }))
-      }));
-
+      // Reload board data to get updated comments
+      await loadBoardData();
       setCommentText('');
     } catch (error) {
       console.error('Error adding comment:', error);
+      alert('Failed to add comment');
     }
   };
 
-  const handleDragStart = (event) => {
-    setActiveId(event.active.id);
-  };
-
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
     setActiveId(null);
     setActiveCard(null);
@@ -479,9 +390,9 @@ const BoardView = () => {
       const newIndex = overList.cards.findIndex(card => card.id === overId);
 
       if (oldIndex !== newIndex && newIndex !== -1) {
-        setBoard(prev => ({
-          ...prev,
-          lists: prev.lists.map(list =>
+        const updatedBoard = {
+          ...board,
+          lists: board.lists.map(list =>
             list.id === activeList.id
               ? {
                   ...list,
@@ -489,7 +400,17 @@ const BoardView = () => {
                 }
               : list
           )
-        }));
+        };
+        setBoard(updatedBoard);
+
+        // Update card position in backend
+        try {
+          await cardsAPI.updateCard(activeId, { position: newIndex });
+        } catch (error) {
+          console.error('Error updating card position:', error);
+          // Revert on error
+          await loadBoardData();
+        }
       }
     } 
     // Moving between lists
@@ -499,9 +420,9 @@ const BoardView = () => {
       
       const activeCard = activeList.cards[activeIndex];
 
-      setBoard(prev => ({
-        ...prev,
-        lists: prev.lists.map(list => {
+      const updatedBoard = {
+        ...board,
+        lists: board.lists.map(list => {
           if (list.id === activeList.id) {
             return {
               ...list,
@@ -518,10 +439,20 @@ const BoardView = () => {
           }
           return list;
         })
-      }));
+      };
+      setBoard(updatedBoard);
 
       // Update card's list_id in backend
-      cardsAPI.updateCard(activeId, { list_id: overList.id });
+      try {
+        await cardsAPI.updateCard(activeId, { 
+          list_id: overList.id,
+          position: overIndex >= 0 ? overIndex : overList.cards.length
+        });
+      } catch (error) {
+        console.error('Error updating card list:', error);
+        // Revert on error
+        await loadBoardData();
+      }
     }
   };
 
@@ -534,7 +465,11 @@ const BoardView = () => {
   }
 
   if (!board) {
-    return <div>Board not found</div>;
+    return (
+      <div className="text-center py-12">
+        <div className="text-red-600 text-lg">Board not found</div>
+      </div>
+    );
   }
 
   return (
@@ -545,17 +480,17 @@ const BoardView = () => {
         <p className="text-gray-600">{board.description}</p>
       </div>
 
-      {/* Kanban Board with DnD */}
+      {/* Kanban Board */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
-        onDragStart={handleDragStart}
+        onDragStart={(event) => setActiveId(event.active.id)}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={board.lists.map(list => list.id)} strategy={horizontalListSortingStrategy}>
-          <div className="flex space-x-6 overflow-x-auto pb-6">
-            {board.lists.map(list => (
-              <SortableList
+        <div className="flex space-x-6 overflow-x-auto pb-6">
+          {board.lists && board.lists.length > 0 ? (
+            board.lists.map(list => (
+              <FixedList
                 key={list.id}
                 list={list}
                 onAddCard={(list) => {
@@ -564,9 +499,13 @@ const BoardView = () => {
                 }}
                 onCardClick={setSelectedCard}
               />
-            ))}
-          </div>
-        </SortableContext>
+            ))
+          ) : (
+            <div className="text-center py-8 w-full">
+              <p className="text-gray-500">No lists found in this board</p>
+            </div>
+          )}
+        </div>
 
         <DragOverlay>
           {activeCard ? <CardPreview card={activeCard} /> : null}
@@ -580,7 +519,7 @@ const BoardView = () => {
             <h2 className="text-xl font-semibold mb-4">Create Card</h2>
             <form onSubmit={handleCreateCard}>
               <div className="form-group">
-                <label>Title</label>
+                <label>Title *</label>
                 <input
                   type="text"
                   value={cardForm.title}

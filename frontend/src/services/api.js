@@ -41,11 +41,17 @@ export const projectsAPI = {
 export const boardsAPI = {
   createBoard: (projectId, data) => api.post(`/projects/${projectId}/boards`, data),
   getBoard: (boardId) => api.get(`/boards/${boardId}`),
+  getProjectBoards: (projectId) => api.get(`/projects/${projectId}/boards`),
+};
+
+export const usersAPI = {
+  getUsers: () => api.get('/users'),
 };
 
 export const cardsAPI = {
   createCard: (listId, data) => api.post(`/lists/${listId}/cards`, data),
-  updateCard: (cardId, data) => api.put(`/cards/${cardId}`, data),
+  updateCard: (cardId, data) => api.put(`/cards/${cardId}`, data), // ДОБАВЬТЕ ЭТУ СТРОЧКУ
+  getCard: (cardId) => api.get(`/cards/${cardId}`),
   assignUser: (cardId, userId) => api.post(`/cards/${cardId}/assignees`, { user_id: userId }),
 };
 

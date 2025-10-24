@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { projectsAPI } from '../../services/api';
 import { Plus, Users, Calendar, Search } from 'lucide-react';
 
@@ -13,6 +13,8 @@ const ProjectsPage = () => {
     name: '',
     description: ''
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadProjects();
@@ -42,7 +44,11 @@ const ProjectsPage = () => {
     e.preventDefault();
     try {
       const response = await projectsAPI.createProject(formData);
-      setProjects(prev => [...prev, response.data]);
+      const newProject = response.data;
+      
+      // После создания проекта переходим на его страницу
+      navigate(`/projects/${newProject.id}`);
+      
       setFormData({ name: '', description: '' });
       setShowProjectModal(false);
     } catch (error) {
@@ -91,7 +97,11 @@ const ProjectsPage = () => {
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProjects.map(project => (
-          <div key={project.id} className="card hover:shadow-lg transition-shadow duration-300 group">
+          <Link
+            key={project.id}
+            to={`/projects/${project.id}`}
+            className="card hover:shadow-lg transition-shadow duration-300 group block"
+          >
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-semibold text-lg text-gray-900 group-hover:text-blue-600 transition-colors">
                 {project.name}
@@ -109,7 +119,7 @@ const ProjectsPage = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-1">
                   <Users size={14} />
-                  <span>{project.board_count || 0} boards</span>
+                  <span>{project.boards?.length || 0} boards</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar size={14} />
@@ -117,14 +127,11 @@ const ProjectsPage = () => {
                 </div>
               </div>
               
-              <Link
-                to={`/projects/${project.id}`}
-                className="btn btn-primary text-sm px-3 py-1"
-              >
+              <span className="btn btn-primary text-sm px-3 py-1">
                 Open
-              </Link>
+              </span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

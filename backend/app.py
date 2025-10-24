@@ -194,6 +194,7 @@ def create_project():
         data = request.get_json()
         print(f"📝 Creating project: {data['name']}")
         
+        # Создаем проект
         project = Project(
             name=data['name'],
             description=data.get('description', ''),
@@ -201,46 +202,52 @@ def create_project():
         )
         
         db.session.add(project)
+        db.session.flush()  # Получаем ID проекта до коммита
         
-        # Добавляем создателя как администратора проекта
-        membership = ProjectMember(
-            project=project,
-            user_id=current_user.id,
-            role=UserRole.ADMIN
+        print(f"📊 Project created with ID: {project.id}")
+        
+        # ИСПРАВЛЕНО: используем project_id вместо project
+        board = Board(
+            name=f"{data['name']} Board",
+            description=data.get('description', ''),
+            project_id=project.id  # ИСПРАВЛЕНО: project_id вместо project
         )
-        db.session.add(membership)
         
-        # ✅ Создаем доску по умолчанию
-        default_board = Board(
-            name='Main Board',
-            description='Main project board',
-            project_id=project.id
-        )
-        db.session.add(default_board)
+        db.session.add(board)
+        db.session.flush()  # Получаем ID доски до коммита
         
-        # ✅ Создаем стандартные списки для доски
+        print(f"📋 Board created with ID: {board.id}")
+        
+        # Создаем стандартные списки для доски
         default_lists = ['To Do', 'In Progress', 'Done']
         for i, list_name in enumerate(default_lists):
             board_list = BoardList(
                 name=list_name,
                 position=i,
-                board=default_board
+                board_id=board.id  # Явно устанавливаем board_id
             )
             db.session.add(board_list)
+            print(f"✅ Created list: {list_name} for board {board.id}")
+        
+        # Добавляем создателя как администратора проекта
+        membership = ProjectMember(
+            project_id=project.id,
+            user_id=current_user.id,
+            role=UserRole.ADMIN
+        )
+        db.session.add(membership)
         
         db.session.commit()
         
-        # ✅ Загружаем проект с досками для ответа
-        project_with_boards = Project.query.get(project.id)
-        
-        print(f"✅ Project {project.name} created successfully with default board")
-        return jsonify(project_with_boards.to_dict())
+        print(f"✅ Project {project.name} created successfully with single board")
+        return jsonify(project.to_dict())
         
     except Exception as e:
         print(f"❌ Error creating project: {str(e)}")
+        import traceback
+        traceback.print_exc()
         db.session.rollback()
-        return jsonify({'error': 'Failed to create project'}), 500
-
+        return jsonify({'error': 'Failed to create project', 'details': str(e)}), 500
 
 # Invitations endpoints
 @app.route('/api/invitations', methods=['GET'])
@@ -328,6 +335,7 @@ def get_board(board_id):
     try:
         board = Board.query.get_or_404(board_id)
         
+        # Проверяем доступ к проекту доски
         if not has_project_access(board.project_id):
             return jsonify({'error': 'Access denied'}), 403
         
@@ -336,6 +344,31 @@ def get_board(board_id):
         print(f"❌ Error getting board: {str(e)}")
         return jsonify({'error': 'Failed to get board'}), 500
 
+@app.route('/api/projects/<int:project_id>/boards')
+@login_required
+def get_project_boards(project_id):
+    try:
+        if not has_project_access(project_id):
+            return jsonify({'error': 'Access denied'}), 403
+        
+        project = Project.query.get_or_404(project_id)
+        boards = Board.query.filter_by(project_id=project_id).all()
+        
+        return jsonify([board.to_dict() for board in boards])
+    except Exception as e:
+        print(f"❌ Error getting project boards: {str(e)}")
+        return jsonify({'error': 'Failed to get project boards'}), 500
+
+@app.route('/api/users')
+@login_required
+def get_users():
+    try:
+        users = User.query.all()
+        return jsonify([user.to_dict() for user in users])
+    except Exception as e:
+        print(f"❌ Error getting users: {str(e)}")
+        return jsonify({'error': 'Failed to get users'}), 500
+    
 # Lists endpoints
 @app.route('/api/lists/<int:list_id>/cards', methods=['POST'])
 @login_required
@@ -379,19 +412,23 @@ def update_card(card_id):
     try:
         card = Card.query.get_or_404(card_id)
         
+        # Проверяем доступ к проекту карточки
         if not has_project_access(card.list.board.project_id, UserRole.MEMBER):
             return jsonify({'error': 'Insufficient permissions'}), 403
         
         data = request.get_json()
         
+        # Обновляем поля карточки
         if 'title' in data:
             card.title = data['title']
         if 'description' in data:
             card.description = data['description']
-        if 'due_date' in data:
-            card.due_date = datetime.fromisoformat(data['due_date']) if data['due_date'] else None
+        if 'due_date' in data and data['due_date']:
+            card.due_date = datetime.fromisoformat(data['due_date'])
         if 'list_id' in data:
             card.list_id = data['list_id']
+        if 'position' in data:
+            card.position = data['position']
         
         card.updated_at = datetime.utcnow()
         db.session.commit()
@@ -402,6 +439,21 @@ def update_card(card_id):
         print(f"❌ Error updating card: {str(e)}")
         db.session.rollback()
         return jsonify({'error': 'Failed to update card'}), 500
+    
+@app.route('/api/cards/<int:card_id>')
+@login_required
+def get_card(card_id):
+    try:
+        card = Card.query.get_or_404(card_id)
+        
+        # Проверяем доступ к проекту карточки
+        if not has_project_access(card.list.board.project_id):
+            return jsonify({'error': 'Access denied'}), 403
+        
+        return jsonify(card.to_dict())
+    except Exception as e:
+        print(f"❌ Error getting card: {str(e)}")
+        return jsonify({'error': 'Failed to get card'}), 500
 
 # Comments endpoints
 @app.route('/api/cards/<int:card_id>/comments', methods=['POST'])
