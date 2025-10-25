@@ -483,6 +483,267 @@ def add_comment(card_id):
         db.session.rollback()
         return jsonify({'error': 'Failed to add comment'}), 500
 
+# Labels endpoints
+@app.route('/api/projects/<int:project_id>/labels', methods=['GET'])
+@login_required
+def get_project_labels(project_id):
+    try:
+        if not has_project_access(project_id):
+            return jsonify({'error': 'Access denied'}), 403
+        
+        labels = Label.query.filter_by(project_id=project_id).all()
+        return jsonify([label.to_dict() for label in labels])
+    except Exception as e:
+        print(f"❌ Error getting project labels: {str(e)}")
+        return jsonify({'error': 'Failed to get project labels'}), 500
+
+@app.route('/api/projects/<int:project_id>/labels', methods=['POST'])
+@login_required
+def create_label(project_id):
+    try:
+        if not has_project_access(project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        data = request.get_json()
+        
+        label = Label(
+            name=data['name'],
+            color=data['color'],
+            project_id=project_id
+        )
+        
+        db.session.add(label)
+        db.session.commit()
+        
+        return jsonify(label.to_dict())
+        
+    except Exception as e:
+        print(f"❌ Error creating label: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create label'}), 500
+
+@app.route('/api/cards/<int:card_id>/labels', methods=['POST'])
+@login_required
+def add_label_to_card(card_id):
+    try:
+        card = Card.query.get_or_404(card_id)
+        
+        if not has_project_access(card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        data = request.get_json()
+        label = Label.query.get_or_404(data['label_id'])
+        
+        # Проверяем, что метка принадлежит проекту карточки
+        if label.project_id != card.list.board.project_id:
+            return jsonify({'error': 'Label does not belong to project'}), 400
+        
+        # Проверяем, не добавлена ли уже метка
+        existing_label = CardLabel.query.filter_by(card_id=card_id, label_id=label.id).first()
+        if existing_label:
+            return jsonify({'error': 'Label already added to card'}), 400
+        
+        card_label = CardLabel(card_id=card_id, label_id=label.id)
+        db.session.add(card_label)
+        db.session.commit()
+        
+        return jsonify({'message': 'Label added successfully'})
+        
+    except Exception as e:
+        print(f"❌ Error adding label to card: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to add label to card'}), 500
+
+@app.route('/api/cards/<int:card_id>/labels/<int:label_id>', methods=['DELETE'])
+@login_required
+def remove_label_from_card(card_id, label_id):
+    try:
+        card = Card.query.get_or_404(card_id)
+        
+        if not has_project_access(card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        card_label = CardLabel.query.filter_by(card_id=card_id, label_id=label_id).first_or_404()
+        
+        db.session.delete(card_label)
+        db.session.commit()
+        
+        return jsonify({'message': 'Label removed successfully'})
+        
+    except Exception as e:
+        print(f"❌ Error removing label from card: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to remove label from card'}), 500
+
+# Checklists endpoints
+@app.route('/api/cards/<int:card_id>/checklists', methods=['POST'])
+@login_required
+def create_checklist(card_id):
+    try:
+        card = Card.query.get_or_404(card_id)
+        
+        if not has_project_access(card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        data = request.get_json()
+        
+        # Определяем следующую позицию
+        max_position = db.session.query(db.func.max(Checklist.position)).filter_by(card_id=card_id).scalar() or 0
+        
+        checklist = Checklist(
+            title=data['title'],
+            card_id=card_id,
+            position=max_position + 1
+        )
+        
+        db.session.add(checklist)
+        db.session.commit()
+        
+        return jsonify(checklist.to_dict())
+        
+    except Exception as e:
+        print(f"❌ Error creating checklist: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create checklist'}), 500
+
+@app.route('/api/checklists/<int:checklist_id>', methods=['PUT'])
+@login_required
+def update_checklist(checklist_id):
+    try:
+        checklist = Checklist.query.get_or_404(checklist_id)
+        
+        if not has_project_access(checklist.card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        data = request.get_json()
+        
+        if 'title' in data:
+            checklist.title = data['title']
+        
+        db.session.commit()
+        
+        return jsonify(checklist.to_dict())
+        
+    except Exception as e:
+        print(f"❌ Error updating checklist: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update checklist'}), 500
+
+@app.route('/api/checklists/<int:checklist_id>', methods=['DELETE'])
+@login_required
+def delete_checklist(checklist_id):
+    try:
+        checklist = Checklist.query.get_or_404(checklist_id)
+        
+        if not has_project_access(checklist.card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        db.session.delete(checklist)
+        db.session.commit()
+        
+        return jsonify({'message': 'Checklist deleted successfully'})
+        
+    except Exception as e:
+        print(f"❌ Error deleting checklist: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to delete checklist'}), 500
+
+@app.route('/api/checklists/<int:checklist_id>/items', methods=['POST'])
+@login_required
+def create_checklist_item(checklist_id):
+    try:
+        checklist = Checklist.query.get_or_404(checklist_id)
+        
+        if not has_project_access(checklist.card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        data = request.get_json()
+        
+        # Определяем следующую позицию
+        max_position = db.session.query(db.func.max(ChecklistItem.position)).filter_by(checklist_id=checklist_id).scalar() or 0
+        
+        checklist_item = ChecklistItem(
+            text=data['text'],
+            checklist_id=checklist_id,
+            position=max_position + 1
+        )
+        
+        db.session.add(checklist_item)
+        db.session.commit()
+        
+        return jsonify(checklist_item.to_dict())
+        
+    except Exception as e:
+        print(f"❌ Error creating checklist item: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create checklist item'}), 500
+
+@app.route('/api/checklists/items/<int:item_id>', methods=['PUT'])
+@login_required
+def update_checklist_item(item_id):
+    try:
+        checklist_item = ChecklistItem.query.get_or_404(item_id)
+        
+        if not has_project_access(checklist_item.checklist.card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        data = request.get_json()
+        
+        if 'text' in data:
+            checklist_item.text = data['text']
+        if 'completed' in data:
+            checklist_item.completed = data['completed']
+        
+        db.session.commit()
+        
+        return jsonify(checklist_item.to_dict())
+        
+    except Exception as e:
+        print(f"❌ Error updating checklist item: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update checklist item'}), 500
+
+@app.route('/api/checklists/items/<int:item_id>', methods=['DELETE'])
+@login_required
+def delete_checklist_item(item_id):
+    try:
+        checklist_item = ChecklistItem.query.get_or_404(item_id)
+        
+        if not has_project_access(checklist_item.checklist.card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        db.session.delete(checklist_item)
+        db.session.commit()
+        
+        return jsonify({'message': 'Checklist item deleted successfully'})
+        
+    except Exception as e:
+        print(f"❌ Error deleting checklist item: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to delete checklist item'}), 500
+
+# Assignees removal endpoint
+@app.route('/api/cards/<int:card_id>/assignees/<int:user_id>', methods=['DELETE'])
+@login_required
+def remove_assignee(card_id, user_id):
+    try:
+        card = Card.query.get_or_404(card_id)
+        
+        if not has_project_access(card.list.board.project_id, UserRole.MEMBER):
+            return jsonify({'error': 'Insufficient permissions'}), 403
+        
+        assignee = CardAssignee.query.filter_by(card_id=card_id, user_id=user_id).first_or_404()
+        
+        db.session.delete(assignee)
+        db.session.commit()
+        
+        return jsonify({'message': 'Assignee removed successfully'})
+        
+    except Exception as e:
+        print(f"❌ Error removing assignee: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to remove assignee'}), 500
+    
 # Assignees endpoints
 @app.route('/api/cards/<int:card_id>/assignees', methods=['POST'])
 @login_required
