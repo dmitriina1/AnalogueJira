@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard/Dashboard';
 import ProjectsPage from './components/Projects/ProjectsPage'; // НОВЫЙ КОМПОНЕНТ
 import ProjectDetail from './components/Projects/ProjectDetail';
 import BoardView from './components/Board/BoardView';
+import InvitePage from './components/Auth/InvitePage';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -100,6 +101,10 @@ function App() {
               } 
             />
             <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route 
+  path="/invite/:token" 
+  element={<InvitePage />} 
+/>
           </Routes>
         </div>
       </AuthProvider>
