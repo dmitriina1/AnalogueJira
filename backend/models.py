@@ -85,7 +85,7 @@ class ProjectMember(db.Model):
 class Invitation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
-    invited_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    invited_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Изменено на nullable=True
     invited_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     role = db.Column(db.Enum(UserRole), default=UserRole.MEMBER)
     token = db.Column(db.String(100), unique=True, nullable=False)
@@ -95,17 +95,21 @@ class Invitation(db.Model):
     
     # Отношения
     invited_by = db.relationship('User', foreign_keys=[invited_by_id], backref='sent_invitations')
+    # Обновите отношение для invited_user_id
+    invited_user = db.relationship('User', foreign_keys=[invited_user_id], backref='received_invitations')
     
     def to_dict(self):
         return {
             'id': self.id,
             'project_id': self.project_id,
             'project_name': self.project.name,
-            'invited_user': self.user.to_dict(),
+            'invited_user': self.invited_user.to_dict() if self.invited_user else None,
             'invited_by': self.invited_by.to_dict(),
             'role': self.role.value,
             'status': self.status,
-            'created_at': self.created_at.isoformat()
+            'created_at': self.created_at.isoformat(),
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'requires_registration': self.role != UserRole.VIEWER  # Добавляем это поле
         }
 
 # Модель доски
