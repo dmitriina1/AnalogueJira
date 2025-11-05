@@ -1,28 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { projectsAPI, invitationsAPI } from '../../services/api';
+import { projectsAPI, invitationsAPI, userAPI } from '../../services/api';
 import { Plus, Users, Calendar, Bell, Clock, Activity } from 'lucide-react';
 
 const Dashboard = () => {
   const [recentProjects, setRecentProjects] = useState([]);
   const [invitations, setInvitations] = useState([]);
+  const [assignedTasksCount, setAssignedTasksCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+const loadData = async () => {
     try {
-      const [projectsRes, invitationsRes] = await Promise.all([
+      const [projectsRes, invitationsRes, assignedCountRes] = await Promise.all([
         projectsAPI.getProjects(),
-        invitationsAPI.getInvitations()
+        invitationsAPI.getInvitations(),
+        userAPI.getAssignedCardsCount()  // Новый запрос
       ]);
       
-      // Берем только последние 3 проекта
       const projects = projectsRes.data.slice(0, 3);
       setRecentProjects(projects);
       setInvitations(invitationsRes.data);
+      setAssignedTasksCount(assignedCountRes.data.count);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -75,7 +77,7 @@ const Dashboard = () => {
         <div className="card text-center">
           <Activity className="mx-auto text-green-500 mb-2" size={24} />
           <h3 className="font-semibold text-gray-900">Active Tasks</h3>
-          <p className="text-2xl font-bold text-green-600">12</p>
+          <p className="text-2xl font-bold text-green-600">{assignedTasksCount}</p>
         </div>
         
         <div className="card text-center">
