@@ -4,16 +4,35 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // Добавьте эту строку
   theme: {
     extend: {
       colors: {
         primary: {
           50: '#eff6ff',
-          100: '#dbeafe',
+          100: '#dbeafe', 
           500: '#3b82f6',
           600: '#2563eb',
           700: '#1d4ed8',
+        },
+        // Добавьте кастомные цвета для темной темы если нужно
+        dark: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+          950: '#030712',
         }
+      },
+      // Можно добавить анимации для плавного перехода
+      transitionProperty: {
+        'colors': 'color, background-color, border-color, text-decoration-color, fill, stroke',
       }
     },
   },

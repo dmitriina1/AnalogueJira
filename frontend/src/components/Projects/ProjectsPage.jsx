@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from '../../hooks/useTranslation';
 import { projectsAPI } from '../../services/api';
 import { Plus, Users, Calendar, Search } from 'lucide-react';
 
@@ -15,6 +16,36 @@ const ProjectsPage = () => {
   });
 
   const navigate = useNavigate();
+  const t = useTranslation();
+
+  // Функция для правильного склонения слов в русском языке
+  const getPlural = (count, one, few, many) => {
+    if (count === 1) return one;
+    if (count >= 2 && count <= 4) return few;
+    return many;
+  };
+
+  // Функция для форматирования количества участников
+  const formatMembersCount = (count) => {
+    const membersCount = count || 0;
+    return `${membersCount} ${getPlural(
+      membersCount,
+      t('projects.member_one', 'участник'),
+      t('projects.member_few', 'участника'),
+      t('projects.member_many', 'участников')
+    )}`;
+  };
+
+  // Функция для форматирования количества досок
+  const formatBoardsCount = (count) => {
+    const boardsCount = count || 0;
+    return `${boardsCount} ${getPlural(
+      boardsCount,
+      t('projects.board_one', 'доска'),
+      t('projects.board_few', 'доски'),
+      t('projects.board_many', 'досок')
+    )}`;
+  };
 
   useEffect(() => {
     loadProjects();
@@ -46,14 +77,13 @@ const ProjectsPage = () => {
       const response = await projectsAPI.createProject(formData);
       const newProject = response.data;
       
-      // После создания проекта переходим на его страницу
       navigate(`/projects/${newProject.id}`);
       
       setFormData({ name: '', description: '' });
       setShowProjectModal(false);
     } catch (error) {
       console.error('Error creating project:', error);
-      alert('Failed to create project');
+      alert(t('projects.failedToCreate'));
     }
   };
 
@@ -70,15 +100,15 @@ const ProjectsPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-          <p className="text-gray-600 mt-1">Manage all your projects in one place</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('projects.title')}</h1>
+          <p className="text-gray-600 mt-1">{t('projects.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowProjectModal(true)}
           className="btn btn-primary flex items-center space-x-2"
         >
           <Plus size={16} />
-          <span>New Project</span>
+          <span>{t('projects.newProject')}</span>
         </button>
       </div>
 
@@ -87,7 +117,7 @@ const ProjectsPage = () => {
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
         <input
           type="text"
-          placeholder="Search projects..."
+          placeholder={t('projects.searchProjects')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -107,19 +137,19 @@ const ProjectsPage = () => {
                 {project.name}
               </h3>
               <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
-                {project.member_count || 0} members
+                {formatMembersCount(project.member_count || 0)}
               </span>
             </div>
             
             <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-              {project.description || 'No description provided'}
+              {project.description || t('projects.noDescription')}
             </p>
             
             <div className="flex items-center justify-between text-sm text-gray-500">
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-1">
                   <Users size={14} />
-                  <span>{project.boards?.length || 0} boards</span>
+                  <span>{formatBoardsCount(project.boards?.length || 0)}</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Calendar size={14} />
@@ -128,7 +158,7 @@ const ProjectsPage = () => {
               </div>
               
               <span className="btn btn-primary text-sm px-3 py-1">
-                Open
+                {t('projects.open')}
               </span>
             </div>
           </Link>
@@ -138,13 +168,13 @@ const ProjectsPage = () => {
       {filteredProjects.length === 0 && projects.length === 0 && (
         <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
           <Users size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
-          <p className="text-gray-600 mb-4">Create your first project to get started</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('projects.noProjects')}</h3>
+          <p className="text-gray-600 mb-4">{t('projects.createFirstProject')}</p>
           <button
             onClick={() => setShowProjectModal(true)}
             className="btn btn-primary"
           >
-            Create Project
+            {t('projects.createProject')}
           </button>
         </div>
       )}
@@ -152,8 +182,8 @@ const ProjectsPage = () => {
       {filteredProjects.length === 0 && projects.length > 0 && (
         <div className="text-center py-12">
           <Search size={48} className="mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
-          <p className="text-gray-600">Try adjusting your search terms</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">{t('projects.noProjectsFound')}</h3>
+          <p className="text-gray-600">{t('projects.adjustSearch')}</p>
         </div>
       )}
 
@@ -161,25 +191,25 @@ const ProjectsPage = () => {
       {showProjectModal && (
         <div className="modal-overlay fade-in">
           <div className="modal">
-            <h2 className="text-xl font-semibold mb-4">Create New Project</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('projects.createNewProject')}</h2>
             <form onSubmit={handleCreateProject}>
               <div className="form-group">
-                <label>Project Name</label>
+                <label>{t('projects.projectName')}</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   required
-                  placeholder="Enter project name"
+                  placeholder={t('projects.enterProjectName')}
                 />
               </div>
               <div className="form-group">
-                <label>Description</label>
+                <label>{t('projects.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows="3"
-                  placeholder="Enter project description"
+                  placeholder={t('projects.enterProjectDescription')}
                 />
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -188,10 +218,10 @@ const ProjectsPage = () => {
                   onClick={() => setShowProjectModal(false)}
                   className="btn btn-secondary"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Create Project
+                  {t('projects.createProject')}
                 </button>
               </div>
             </form>

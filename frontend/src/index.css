@@ -2,7 +2,170 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Базовые стили */
+/* Базовые стили с поддержкой темной темы */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Стили для light темы */
+:root, .light {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --text-primary: #334155;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+}
+
+/* Стили для dark темы */
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --border-color: #334155;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+/* Принудительно применяем темную тему ко всем элементам */
+.dark body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Убедитесь, что все основные элементы наследуют цвета */
+.dark * {
+  border-color: var(--border-color);
+}
+
+/* Кастомные классы с поддержкой темной темы */
+.btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600;
+}
+
+.btn-secondary {
+  @apply bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 dark:bg-gray-800 dark:border-gray-700 dark:text-white;
+}
+
+/* Специфичные стили для sidebar */
+.dark .sidebar {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+.dark .sidebar h2 {
+  color: #f1f5f9;
+}
+
+.dark .sidebar nav a {
+  color: #cbd5e1;
+}
+
+.dark .sidebar nav a:hover {
+  background-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark .sidebar nav a.bg-blue-50 {
+  background-color: #1e40af;
+  color: #f1f5f9;
+  border-color: #3b82f6;
+}
+
+/* Стили для header */
+.dark header {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark header h1 {
+  color: #f1f5f9;
+}
+
+.dark header button {
+  color: #cbd5e1;
+}
+
+.dark header button:hover {
+  color: #f1f5f9;
+}
+
+/* Улучшенные стили для всех страниц */
+.dark .bg-white {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #1e293b !important;
+}
+
+.dark .text-gray-900 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-gray-500 {
+  color: #64748b !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #334155 !important;
+}
+
+.dark .border-gray-300 {
+  border-color: #475569 !important;
+}
+
+/* Специфичные стили для проектной страницы */
+.dark .kanban-list {
+  background-color: #1e293b !important;
+}
+
+.dark .kanban-card {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Гарантируем, что модальные окна тоже имеют темный фон */
+.dark .modal {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Базовые стили с поддержкой темной темы */
 * {
   margin: 0;
   padding: 0;
@@ -14,27 +177,34 @@ body {
   background-color: #f8fafc;
   color: #334155;
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Кастомные классы */
+/* Темная тема */
+.dark body {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* Кастомные классы с поддержкой темной темы */
 .btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800;
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 dark:bg-blue-700 dark:hover:bg-blue-600;
 }
 
 .btn-secondary {
-  @apply bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 focus:ring-gray-500;
+  @apply bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600;
 }
 
 .btn-danger {
-  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 dark:bg-red-700 dark:hover:bg-red-600;
 }
 
 .card {
-  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 dark:bg-gray-800 dark:border-gray-700;
 }
 
 .modal-overlay {
@@ -42,7 +212,7 @@ body {
 }
 
 .modal {
-  @apply bg-white rounded-xl shadow-xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto;
+  @apply bg-white rounded-xl shadow-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto dark:bg-gray-800 dark:text-white;
 }
 
 .form-group {
@@ -50,25 +220,25 @@ body {
 }
 
 .form-group label {
-  @apply block text-sm font-medium text-gray-700 mb-2;
+  @apply block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300;
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
 }
 
 .form-group textarea {
-  @apply resize-y min-h-[100px]; /* ИСПРАВЛЕНО: resize-vertical → resize-y */
+  @apply resize-y min-h-[100px];
 }
 
 .error {
-  @apply text-red-600 text-sm mt-1;
+  @apply text-red-600 text-sm mt-1 dark:text-red-400;
 }
 
 .success {
-  @apply text-green-600 text-sm mt-1;
+  @apply text-green-600 text-sm mt-1 dark:text-green-400;
 }
 
 /* Анимации */
@@ -87,20 +257,20 @@ body {
 }
 
 .kanban-list {
-  @apply flex-shrink-0 w-80 bg-gray-50 rounded-lg p-4;
+  @apply flex-shrink-0 w-80 bg-gray-50 rounded-lg p-4 dark:bg-gray-700;
 }
 
 .kanban-card {
-  @apply bg-white rounded-lg shadow border p-4 mb-3 cursor-pointer hover:shadow-md transition-shadow;
+  @apply bg-white rounded-lg shadow border p-4 mb-3 cursor-pointer hover:shadow-md transition-shadow dark:bg-gray-600 dark:border-gray-500 dark:text-white;
 }
 
 /* Стили для загрузки */
 .loading-spinner {
-  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600;
+  @apply animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400;
 }
 
 .skeleton {
-  @apply animate-pulse bg-gray-200 rounded;
+  @apply animate-pulse bg-gray-200 rounded dark:bg-gray-600;
 }
 
 /* Стили для карточек и меток */
@@ -114,5 +284,212 @@ body {
 
 /* Стили для комментариев */
 .comment-bubble {
-  @apply bg-gray-50 rounded-lg p-3 border border-gray-200;
+  @apply bg-gray-50 rounded-lg p-3 border border-gray-200 dark:bg-gray-700 dark:border-gray-600;
+}
+
+/* Стили для загрузки (альтернативные) */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.dark .loading-spinner {
+  border: 4px solid #374151;
+  border-top: 4px solid #60a5fa;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dark .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #2563eb;
+}
+
+.dark .btn-primary {
+  background: #1d4ed8;
+}
+
+.dark .btn-primary:hover {
+  background: #1e40af;
+}
+
+.btn-secondary {
+  background: #6b7280;
+  color: white;
+  border: none;
+}
+
+.btn-secondary:hover {
+  background: #4b5563;
+}
+
+.dark .btn-secondary {
+  background: #4b5563;
+}
+
+.dark .btn-secondary:hover {
+  background: #374151;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.dark .form-group label {
+  color: #d1d5db;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.dark .form-group input,
+.dark .form-group textarea {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark .form-group input::placeholder,
+.dark .form-group textarea::placeholder {
+  color: #9ca3af;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark .form-group input:focus,
+.dark .form-group textarea:focus {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+/* Дополнительные стили для лучшей поддержки темной темы */
+.dark .card {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+.dark .modal {
+  background-color: #1f2937;
+  color: #f9fafb;
+}
+
+.dark .comment-bubble {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+.dark .kanban-list {
+  background-color: #374151;
+}
+
+.dark .kanban-card {
+  background-color: #4b5563;
+  border-color: #6b7280;
+}
+
+/* Плавные переходы для всех цветовых изменений */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/*Нужно сделать 3 вещи
+- Сделать отображение задач у другого человека
+- Реализовать приглашения/Роли
+*/
+
+/* Стили для полей ввода в темной теме */
+.dark .form-group input,
+.dark .form-group textarea,
+.dark .form-group select {
+  color: #e5e7eb !important; /* text-gray-200 - хорошая видимость */
+  background-color: #374151 !important; /* bg-gray-700 */
+  border-color: #4b5563 !important; /* border-gray-600 */
+}
+
+.dark .form-group input::placeholder,
+.dark .form-group textarea::placeholder {
+  color: #9ca3af !important; /* text-gray-400 - как в комментариях */
+}
+
+/* Для consistency - обновить все input элементы */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  color: #e5e7eb !important;
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Особенно для модальных окон */
+.dark .modal input,
+.dark .modal textarea,
+.dark .modal select {
+  color: #e5e7eb !important;
+  background-color: #1f2937 !important; /* Чуть темнее для модалок */
+  border-color: #374151 !important;
+}
+
+/* Убедиться, что фокус тоже хорошо виден */
+.dark .form-group input:focus,
+.dark .form-group textarea:focus,
+.dark .form-group select:focus {
+  border-color: #3b82f6 !important; /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
 }

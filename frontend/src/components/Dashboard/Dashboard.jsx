@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { projectsAPI, invitationsAPI } from '../../services/api';
+import { useTranslation } from '../../hooks/useTranslation';
+import { projectsAPI, invitationsAPI, userAPI } from '../../services/api';
 import { Plus, Users, Calendar, Bell, Clock, Activity } from 'lucide-react';
 
 const Dashboard = () => {
   const [recentProjects, setRecentProjects] = useState([]);
   const [invitations, setInvitations] = useState([]);
+  const [assignedTasksCount, setAssignedTasksCount] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const t = useTranslation();
 
   useEffect(() => {
     loadData();
@@ -14,15 +18,16 @@ const Dashboard = () => {
 
   const loadData = async () => {
     try {
-      const [projectsRes, invitationsRes] = await Promise.all([
+      const [projectsRes, invitationsRes, assignedCountRes] = await Promise.all([
         projectsAPI.getProjects(),
-        invitationsAPI.getInvitations()
+        invitationsAPI.getInvitations(),
+        userAPI.getAssignedCardsCount()
       ]);
       
-      // Берем только последние 3 проекта
       const projects = projectsRes.data.slice(0, 3);
       setRecentProjects(projects);
       setInvitations(invitationsRes.data);
+      setAssignedTasksCount(assignedCountRes.data.count);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -60,27 +65,27 @@ const Dashboard = () => {
     <div className="space-y-6">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Welcome back!</h1>
-        <p className="text-blue-100">Here's what's happening with your projects today.</p>
+        <h1 className="text-2xl font-bold mb-2">{t('dashboard.welcomeBack')}</h1>
+        <p className="text-blue-100">{t('dashboard.welcomeSubtitle')}</p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="card text-center">
           <Users className="mx-auto text-blue-500 mb-2" size={24} />
-          <h3 className="font-semibold text-gray-900">Total Projects</h3>
+          <h3 className="font-semibold text-gray-900">{t('dashboard.totalProjects')}</h3>
           <p className="text-2xl font-bold text-blue-600">{recentProjects.length}</p>
         </div>
         
         <div className="card text-center">
           <Activity className="mx-auto text-green-500 mb-2" size={24} />
-          <h3 className="font-semibold text-gray-900">Active Tasks</h3>
-          <p className="text-2xl font-bold text-green-600">12</p>
+          <h3 className="font-semibold text-gray-900">{t('dashboard.activeTasks')}</h3>
+          <p className="text-2xl font-bold text-green-600">{assignedTasksCount}</p>
         </div>
         
         <div className="card text-center">
           <Clock className="mx-auto text-orange-500 mb-2" size={24} />
-          <h3 className="font-semibold text-gray-900">Pending</h3>
+          <h3 className="font-semibold text-gray-900">{t('dashboard.pending')}</h3>
           <p className="text-2xl font-bold text-orange-600">{invitations.length}</p>
         </div>
       </div>
@@ -89,9 +94,9 @@ const Dashboard = () => {
         {/* Recent Projects */}
         <div className="card">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Recent Projects</h2>
+            <h2 className="text-lg font-semibold">{t('dashboard.recentProjects')}</h2>
             <Link to="/projects" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-              View all
+              {t('dashboard.viewAll')}
             </Link>
           </div>
           
@@ -107,7 +112,7 @@ const Dashboard = () => {
                     {project.name}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    {project.boards?.length || 0} boards • {project.member_count || 0} members
+                    {project.boards?.length || 0} {t('dashboard.boards')} • {project.member_count || 0} {t('dashboard.members')}
                   </p>
                 </div>
                 <Calendar size={16} className="text-gray-400" />
@@ -117,9 +122,9 @@ const Dashboard = () => {
             {recentProjects.length === 0 && (
               <div className="text-center py-4">
                 <Users className="mx-auto text-gray-400 mb-2" size={32} />
-                <p className="text-gray-500">No projects yet</p>
+                <p className="text-gray-500">{t('dashboard.noProjects')}</p>
                 <Link to="/projects" className="btn btn-primary mt-2 text-sm">
-                  Create Project
+                  {t('dashboard.createProject')}
                 </Link>
               </div>
             )}
@@ -131,7 +136,7 @@ const Dashboard = () => {
           <div className="card">
             <div className="flex items-center space-x-2 mb-4">
               <Bell className="text-orange-500" size={20} />
-              <h2 className="text-lg font-semibold">Pending Invitations</h2>
+              <h2 className="text-lg font-semibold">{t('dashboard.pendingInvitations')}</h2>
             </div>
             
             <div className="space-y-3">
@@ -142,7 +147,7 @@ const Dashboard = () => {
                       {invitation.project_name}
                     </p>
                     <p className="text-xs text-gray-600">
-                      Invited by: {invitation.invited_by?.username}
+                      {t('dashboard.invitedBy')} {invitation.invited_by?.username}
                     </p>
                   </div>
                   <div className="flex space-x-2">
@@ -150,13 +155,13 @@ const Dashboard = () => {
                       onClick={() => handleAcceptInvitation(invitation.id)}
                       className="btn btn-primary text-xs px-2 py-1"
                     >
-                      Accept
+                      {t('dashboard.accept')}
                     </button>
                     <button
                       onClick={() => handleRejectInvitation(invitation.id)}
                       className="btn btn-secondary text-xs px-2 py-1"
                     >
-                      Decline
+                      {t('dashboard.decline')}
                     </button>
                   </div>
                 </div>
@@ -167,7 +172,7 @@ const Dashboard = () => {
 
         {/* Quick Actions */}
         <div className="card lg:col-span-2">
-          <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+          <h2 className="text-lg font-semibold mb-4">{t('dashboard.quickActions')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               to="/projects"
@@ -175,7 +180,7 @@ const Dashboard = () => {
             >
               <Plus size={24} className="text-gray-400 group-hover:text-blue-500 mb-2" />
               <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">
-                New Project
+                {t('dashboard.newProject')}
               </span>
             </Link>
             
@@ -185,21 +190,21 @@ const Dashboard = () => {
             >
               <Users size={24} className="text-gray-400 group-hover:text-green-500 mb-2" />
               <span className="text-sm font-medium text-gray-700 group-hover:text-green-600">
-                Manage Teams
+                {t('dashboard.manageTeams')}
               </span>
             </Link>
             
             <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors group cursor-not-allowed opacity-50">
               <Activity size={24} className="text-gray-400 mb-2" />
               <span className="text-sm font-medium text-gray-700">
-                Reports
+                {t('dashboard.reports')}
               </span>
             </div>
             
             <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-orange-500 hover:bg-orange-50 transition-colors group cursor-not-allowed opacity-50">
               <Calendar size={24} className="text-gray-400 mb-2" />
               <span className="text-sm font-medium text-gray-700">
-                Calendar
+                {t('dashboard.calendar')}
               </span>
             </div>
           </div>

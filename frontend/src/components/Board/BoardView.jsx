@@ -18,6 +18,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { boardsAPI, cardsAPI, commentsAPI } from '../../services/api';
+import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Plus, 
   MessageSquare, 
@@ -218,6 +219,8 @@ const SortableCard = ({ card, onClick }) => {
 
 // Sortable компонент для списка
 const SortableList = ({ list, onAddCard, onCardClick }) => {
+  const t = useTranslation();
+  
   const {
     attributes,
     listeners,
@@ -269,7 +272,47 @@ const SortableList = ({ list, onAddCard, onCardClick }) => {
         className="w-full mt-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded flex items-center justify-center space-x-2 transition-colors"
       >
         <Plus size={16} />
-        <span>Add a card</span>
+        <span>{t('board.addCard')}</span>
+      </button>
+    </div>
+  );
+};
+
+// FixedList компонент (добавляем его, так как он используется в основном компоненте)
+const FixedList = ({ list, onAddCard, onCardClick }) => {
+  const t = useTranslation();
+
+  return (
+    <div className="flex-shrink-0 w-80 bg-gray-100 rounded-lg p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center space-x-2">
+          <GripVertical size={16} className="text-gray-400" />
+          <h3 className="font-semibold text-gray-900">{list.name}</h3>
+        </div>
+        <span className="text-sm text-gray-500 bg-white px-2 py-1 rounded">
+          {list.cards ? list.cards.length : 0}
+        </span>
+      </div>
+
+      <div className="space-y-3 min-h-[100px]">
+        {list.cards && list.cards.map((card) => (
+          <div
+            key={card.id}
+            className="bg-white rounded-lg shadow-sm border p-4 mb-3 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => onCardClick(card)}
+          >
+            <h4 className="font-medium text-gray-900 mb-2">{card.title}</h4>
+            {/* Можно добавить больше информации о карточке при необходимости */}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onAddCard(list)}
+        className="w-full mt-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded flex items-center justify-center space-x-2 transition-colors"
+      >
+        <Plus size={16} />
+        <span>{t('board.addCard')}</span>
       </button>
     </div>
   );
@@ -297,6 +340,8 @@ const BoardView = () => {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  const t = useTranslation();
 
   useEffect(() => {
     loadBoardData();
@@ -336,7 +381,6 @@ const BoardView = () => {
       const response = await cardsAPI.createCard(selectedList.id, cardForm);
       console.log('Card created:', response.data);
       
-      // Reload board data to get the updated state
       await loadBoardData();
       
       setCardForm({ title: '', description: '', due_date: '' });
@@ -344,7 +388,7 @@ const BoardView = () => {
       setSelectedList(null);
     } catch (error) {
       console.error('Error creating card:', error);
-      alert('Failed to create card');
+      alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -354,13 +398,11 @@ const BoardView = () => {
 
     try {
       await commentsAPI.addComment(selectedCard.id, commentText);
-      
-      // Reload board data to get updated comments
       await loadBoardData();
       setCommentText('');
     } catch (error) {
       console.error('Error adding comment:', error);
-      alert('Failed to add comment');
+      alert(t('board.failedToAddComment'));
     }
   };
 
@@ -374,7 +416,6 @@ const BoardView = () => {
     const activeId = active.id;
     const overId = over.id;
 
-    // Find the containers
     const activeList = board.lists.find(list => 
       list.cards?.some(card => card.id === activeId)
     );
@@ -384,7 +425,6 @@ const BoardView = () => {
 
     if (!activeList || !overList) return;
 
-    // Moving within the same list
     if (activeList.id === overList.id) {
       const oldIndex = activeList.cards.findIndex(card => card.id === activeId);
       const newIndex = overList.cards.findIndex(card => card.id === overId);
@@ -403,18 +443,14 @@ const BoardView = () => {
         };
         setBoard(updatedBoard);
 
-        // Update card position in backend
         try {
           await cardsAPI.updateCard(activeId, { position: newIndex });
         } catch (error) {
           console.error('Error updating card position:', error);
-          // Revert on error
           await loadBoardData();
         }
       }
-    } 
-    // Moving between lists
-    else {
+    } else {
       const activeIndex = activeList.cards.findIndex(card => card.id === activeId);
       const overIndex = overList.cards.findIndex(card => card.id === overId);
       
@@ -442,7 +478,6 @@ const BoardView = () => {
       };
       setBoard(updatedBoard);
 
-      // Update card's list_id in backend
       try {
         await cardsAPI.updateCard(activeId, { 
           list_id: overList.id,
@@ -450,7 +485,6 @@ const BoardView = () => {
         });
       } catch (error) {
         console.error('Error updating card list:', error);
-        // Revert on error
         await loadBoardData();
       }
     }
@@ -467,7 +501,7 @@ const BoardView = () => {
   if (!board) {
     return (
       <div className="text-center py-12">
-        <div className="text-red-600 text-lg">Board not found</div>
+        <div className="text-red-600 text-lg">{t('board.boardNotFound')}</div>
       </div>
     );
   }
@@ -502,7 +536,7 @@ const BoardView = () => {
             ))
           ) : (
             <div className="text-center py-8 w-full">
-              <p className="text-gray-500">No lists found in this board</p>
+              <p className="text-gray-500">{t('board.noListsFound')}</p>
             </div>
           )}
         </div>
@@ -516,29 +550,29 @@ const BoardView = () => {
       {showCardModal && (
         <div className="modal-overlay">
           <div className="modal max-w-2xl">
-            <h2 className="text-xl font-semibold mb-4">Create Card</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('board.createCard')}</h2>
             <form onSubmit={handleCreateCard}>
               <div className="form-group">
-                <label>Title *</label>
+                <label>{t('common.title')} *</label>
                 <input
                   type="text"
                   value={cardForm.title}
                   onChange={(e) => setCardForm(prev => ({ ...prev, title: e.target.value }))}
                   required
-                  placeholder="Enter card title"
+                  placeholder={t('board.enterCardTitle')}
                 />
               </div>
               <div className="form-group">
-                <label>Description</label>
+                <label>{t('common.description')}</label>
                 <textarea
                   value={cardForm.description}
                   onChange={(e) => setCardForm(prev => ({ ...prev, description: e.target.value }))}
                   rows="3"
-                  placeholder="Enter card description"
+                  placeholder={t('board.enterCardDescription')}
                 />
               </div>
               <div className="form-group">
-                <label>Due Date</label>
+                <label>{t('board.dueDate')}</label>
                 <input
                   type="date"
                   value={cardForm.due_date}
@@ -554,10 +588,10 @@ const BoardView = () => {
                   }}
                   className="btn btn-secondary"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Create Card
+                  {t('common.create')}
                 </button>
               </div>
             </form>
@@ -584,9 +618,9 @@ const BoardView = () => {
               <div className="lg:col-span-2 space-y-6">
                 {/* Description */}
                 <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
+                  <h3 className="font-semibold mb-2">{t('common.description')}</h3>
                   <p className="text-gray-700 bg-gray-50 p-3 rounded">
-                    {selectedCard.description || 'No description provided'}
+                    {selectedCard.description || t('board.noDescription')}
                   </p>
                 </div>
 
@@ -614,13 +648,13 @@ const BoardView = () => {
 
                 {/* Comments */}
                 <div>
-                  <h3 className="font-semibold mb-4">Comments</h3>
+                  <h3 className="font-semibold mb-4">{t('board.comments')}</h3>
                   
                   <form onSubmit={handleAddComment} className="mb-4">
                     <textarea
                       value={commentText}
                       onChange={(e) => setCommentText(e.target.value)}
-                      placeholder="Add a comment..."
+                      placeholder={t('board.addCommentPlaceholder')}
                       className="w-full p-3 border border-gray-300 rounded-lg resize-none"
                       rows="3"
                     />
@@ -630,7 +664,7 @@ const BoardView = () => {
                         disabled={!commentText.trim()}
                         className="btn btn-primary"
                       >
-                        Add Comment
+                        {t('board.addComment')}
                       </button>
                     </div>
                   </form>
@@ -652,6 +686,9 @@ const BoardView = () => {
                         <p className="text-gray-700">{comment.text}</p>
                       </div>
                     ))}
+                    {(!selectedCard.comments || selectedCard.comments.length === 0) && (
+                      <p className="text-gray-500 text-center py-4">{t('board.noComments')}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -661,7 +698,7 @@ const BoardView = () => {
                 {/* Due Date */}
                 {selectedCard.due_date && (
                   <div>
-                    <h3 className="font-semibold mb-2">Due Date</h3>
+                    <h3 className="font-semibold mb-2">{t('board.dueDate')}</h3>
                     <div className="flex items-center space-x-2 text-gray-700">
                       <Clock size={16} />
                       <span>{new Date(selectedCard.due_date).toLocaleDateString()}</span>
@@ -671,7 +708,7 @@ const BoardView = () => {
 
                 {/* Assignees */}
                 <div>
-                  <h3 className="font-semibold mb-2">Assignees</h3>
+                  <h3 className="font-semibold mb-2">{t('board.assignees')}</h3>
                   <div className="space-y-2">
                     {selectedCard.assignees?.map(assignee => (
                       <div key={assignee.id} className="flex items-center space-x-2">
@@ -682,14 +719,14 @@ const BoardView = () => {
                       </div>
                     ))}
                     {(!selectedCard.assignees || selectedCard.assignees.length === 0) && (
-                      <p className="text-gray-500 text-sm">No assignees</p>
+                      <p className="text-gray-500 text-sm">{t('board.noAssignees')}</p>
                     )}
                   </div>
                 </div>
 
                 {/* Labels */}
                 <div>
-                  <h3 className="font-semibold mb-2">Labels</h3>
+                  <h3 className="font-semibold mb-2">{t('board.labels')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedCard.labels?.map(label => (
                       <span
@@ -701,7 +738,7 @@ const BoardView = () => {
                       </span>
                     ))}
                     {(!selectedCard.labels || selectedCard.labels.length === 0) && (
-                      <p className="text-gray-500 text-sm">No labels</p>
+                      <p className="text-gray-500 text-sm">{t('board.noLabels')}</p>
                     )}
                   </div>
                 </div>

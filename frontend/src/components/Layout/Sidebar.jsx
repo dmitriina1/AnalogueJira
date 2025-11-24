@@ -1,20 +1,22 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from '../../hooks/useTranslation';
 import { LayoutDashboard, Folder, Settings } from 'lucide-react';
 
 const Sidebar = () => {
   const location = useLocation();
+  const t = useTranslation();
 
   const menuItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/projects', icon: Folder, label: 'Projects' }, // ИЗМЕНЕНО: Users → Folder
-    { path: '/settings', icon: Settings, label: 'Settings' },
+    { path: '/dashboard', icon: LayoutDashboard, label: t('sidebar.dashboard') },
+    { path: '/projects', icon: Folder, label: t('sidebar.projects') },
+    { path: '/settings', icon: Settings, label: t('sidebar.settings') },
   ];
 
   return (
     <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900">Navigation</h2>
+        <h2 className="text-lg font-semibold text-gray-900">{t('sidebar.navigation')}</h2>
       </div>
       <nav className="px-4">
         <ul className="space-y-1">
