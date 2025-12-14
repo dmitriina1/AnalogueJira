@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from flask_cors import CORS
 from models import db, User, Project, ProjectMember, Invitation, Board, BoardList, Card, Label, CardLabel, CardAssignee, Checklist, ChecklistItem, Comment, UserRole, Notification
 from config import Config
+from models import Mention
 import uuid
 from datetime import datetime, timedelta
 import json
@@ -13,7 +14,7 @@ from flask_cors import CORS
 from models import (
     db, User, Project, ProjectMember, Invitation, 
     Board, BoardList, Card, Label, CardLabel, 
-    CardAssignee, Checklist, ChecklistItem, Comment, UserRole
+    CardAssignee, Checklist, ChecklistItem, Comment, UserRole, Mention  
 )
 
 app = Flask(__name__)
@@ -462,16 +463,20 @@ def get_card(card_id):
         return jsonify({'error': 'Failed to get card'}), 500
 
 # Comments endpoints
+# Comments endpoints
 @app.route('/api/cards/<int:card_id>/comments', methods=['POST'])
 @login_required
 def add_comment(card_id):
     try:
+        print(f"🔵 Adding comment to card {card_id}")
         card = Card.query.get_or_404(card_id)
+        print(f"🔵 Card found: {card.title}")
         
         if not has_project_access(card.list.board.project_id, UserRole.MEMBER):
             return jsonify({'error': 'Insufficient permissions'}), 403
         
         data = request.get_json()
+        print(f"🔵 Comment data: {data}")
         
         comment = Comment(
             text=data['text'],
@@ -480,14 +485,83 @@ def add_comment(card_id):
         )
         
         db.session.add(comment)
-        db.session.commit()
+        db.session.flush()  # Получаем ID комментария
+        print(f"🔵 Comment created with ID: {comment.id}")
         
-        return jsonify(comment.to_dict())
+        # Парсим упоминания и создаем их
+        import re
+        mention_regex = r'@(\w+)'
+        mentions = re.findall(mention_regex, data['text'])
+        print(f"🔵 Found mentions: {mentions}")
+        
+        mentioned_users = []
+        
+        for username in mentions:
+            print(f"🔵 Processing mention: @{username}")
+            # Ищем пользователя по имени
+            user = User.query.filter_by(username=username).first()
+            if user:
+                print(f"🔵 User found: {user.username} (ID: {user.id})")
+                if user.id != current_user.id:
+                    # Проверяем, что пользователь в проекте
+                    membership = ProjectMember.query.filter_by(
+                        project_id=card.list.board.project_id,
+                        user_id=user.id
+                    ).first()
+                    
+                    if membership:
+                        print(f"🔵 User is project member, creating mention")
+                        mention = Mention(
+                            comment_id=comment.id,
+                            mentioned_user_id=user.id
+                        )
+                        db.session.add(mention)
+                        mentioned_users.append(user)
+                        
+                        # Создаем уведомление об упоминании
+                        try:
+                            notification = Notification(
+                                user_id=user.id,
+                                type='mention',
+                                title="Вас упомянули в комментарии",
+                                message=f'Пользователь {current_user.username} упомянул вас в комментарии к карточке "{card.title}"',
+                                data={
+                                    'comment_id': comment.id,
+                                    'card_id': card.id,
+                                    'card_title': card.title,
+                                    'project_id': card.list.board.project_id,
+                                    'project_name': card.list.board.project_ref.name,
+                                    'mentioned_by_id': current_user.id,
+                                    'mentioned_by_username': current_user.username,
+                                    'board_id': card.list.board.id
+                                }
+                            )
+                            db.session.add(notification)
+                            print(f"✅ Created mention notification for user {user.username}")
+                        except Exception as notification_error:
+                            print(f"❌ Error creating mention notification: {notification_error}")
+                    else:
+                        print(f"🔴 User {username} is not a project member")
+                else:
+                    print(f"🔵 User is commenting themselves, skipping mention")
+            else:
+                print(f"🔴 User {username} not found")
+        
+        db.session.commit()
+        print(f"✅ Comment added successfully with {len(mentioned_users)} mentions")
+        
+        # Возвращаем комментарий с информацией об упоминаниях
+        comment_dict = comment.to_dict()
+        comment_dict['mentions'] = [user.to_dict() for user in mentioned_users]
+        
+        return jsonify(comment_dict)
         
     except Exception as e:
         print(f"❌ Error adding comment: {str(e)}")
+        import traceback
+        traceback.print_exc()
         db.session.rollback()
-        return jsonify({'error': 'Failed to add comment'}), 500
+        return jsonify({'error': 'Failed to add comment', 'details': str(e)}), 500
 
 # Labels endpoints
 @app.route('/api/projects/<int:project_id>/labels', methods=['GET'])
@@ -1213,6 +1287,128 @@ def get_unread_notifications_count():
         print(f"❌ Error getting unread notifications count: {str(e)}")
         return jsonify({'error': 'Failed to get unread count'}), 500
 
+# Поиск пользователей проекта для упоминаний
+@app.route('/api/projects/<int:project_id>/users/search')
+@login_required
+def search_project_users(project_id):
+    try:
+        if not has_project_access(project_id):
+            return jsonify({'error': 'Access denied'}), 403
+        
+        query = request.args.get('q', '')
+        
+        # Если запрос пустой (просто @), возвращаем всех пользователей
+        if not query:
+            # Ищем всех пользователей проекта (исключая viewer)
+            members = ProjectMember.query.filter(
+                ProjectMember.project_id == project_id,
+                ProjectMember.role != UserRole.VIEWER
+            ).limit(10).all()
+        else:
+            # Ищем пользователей по имени
+            members = ProjectMember.query.filter(
+                ProjectMember.project_id == project_id,
+                ProjectMember.role != UserRole.VIEWER,
+                ProjectMember.user.has(User.username.ilike(f'%{query}%'))
+            ).limit(10).all()
+        
+        users = [member.user.to_dict() for member in members]
+        return jsonify(users)
+        
+    except Exception as e:
+        print(f"❌ Error searching users: {str(e)}")
+        return jsonify({'error': 'Failed to search users'}), 500    
+
+# Уведомления для упоминаний
+@app.route('/api/notifications/mention', methods=['POST'])
+@login_required
+def create_mention_notification():
+    """Создание уведомления об упоминании"""
+    try:
+        data = request.get_json()
+        
+        comment_id = data.get('comment_id')
+        mentioned_user_id = data.get('mentioned_user_id')
+        
+        if not comment_id or not mentioned_user_id:
+            return jsonify({'error': 'comment_id and mentioned_user_id are required'}), 400
+        
+        # Находим комментарий и пользователей
+        comment = Comment.query.get_or_404(comment_id)
+        mentioned_user = User.query.get_or_404(mentioned_user_id)
+        
+        # Получаем проект через карточку и доску
+        card = comment.card
+        board = card.list.board
+        project = board.project_ref
+        
+        # Проверяем, что упомянутый пользователь является участником проекта
+        mentioned_user_membership = ProjectMember.query.filter_by(
+            project_id=project.id,
+            user_id=mentioned_user_id
+        ).first()
+        
+        if not mentioned_user_membership:
+            return jsonify({'error': 'Mentioned user is not a project member'}), 400
+        
+        # Не создаем уведомление, если пользователь упоминает сам себя
+        if mentioned_user_id == current_user.id:
+            return jsonify({'message': 'No notification created for self-mention'}), 200
+        
+        # Создаем уведомление
+        notification = Notification(
+            user_id=mentioned_user_id,
+            type='mention',
+            title="Вас упомянули в комментарии",
+            message=f'Пользователь {current_user.username} упомянул вас в комментарии к карточке "{card.title}"',
+            data={
+                'comment_id': comment.id,
+                'card_id': card.id,
+                'card_title': card.title,
+                'project_id': project.id,
+                'project_name': project.name,
+                'mentioned_by_id': current_user.id,
+                'mentioned_by_username': current_user.username,
+                'board_id': board.id
+            }
+        )
+        
+        db.session.add(notification)
+        db.session.commit()
+        
+        print(f"✅ Created mention notification for user {mentioned_user.username}")
+        
+        return jsonify({
+            'message': 'Notification created successfully',
+            'notification': notification.to_dict()
+        })
+        
+    except Exception as e:
+        print(f"❌ Error creating mention notification: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create notification'}), 500
+
+# Получение упоминаний для пользователя
+@app.route('/api/user/mentions')
+@login_required
+def get_user_mentions():
+    """Получить упоминания текущего пользователя"""
+    try:
+        mentions = Mention.query.filter_by(
+            mentioned_user_id=current_user.id
+        ).order_by(Mention.created_at.desc()).limit(50).all()
+        
+        return jsonify([{
+            'id': mention.id,
+            'comment': mention.comment.to_dict(),
+            'mentioned_user': mention.mentioned_user.to_dict(),
+            'created_at': mention.created_at.isoformat()
+        } for mention in mentions])
+        
+    except Exception as e:
+        print(f"❌ Error getting mentions: {str(e)}")
+        return jsonify({'error': 'Failed to get mentions'}), 500
+        
 # Запуск приложения
 if __name__ == '__main__':
     print("🚀 Starting Jira Analog Backend...")

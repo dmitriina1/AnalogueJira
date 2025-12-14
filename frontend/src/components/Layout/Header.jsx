@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
-import { LogOut, Bell, User, Clock, X, CheckCircle, UserPlus } from 'lucide-react';
+import { LogOut, Bell, User, Clock, X, CheckCircle, UserPlus, MessageSquare } from 'lucide-react';
 import { notificationsAPI } from '../../services/api';
 import { formatDate } from '../../utils/helpers.js';
 
@@ -24,13 +24,26 @@ const Header = () => {
   const loadNotifications = async () => {
     try {
       console.log('🔄 Loading notifications...');
-      const response = await notificationsAPI.getNotifications();
-      console.log('📨 Notifications response:', response);
-      console.log('📋 Notifications data:', response.data);
-      setNotifications(response.data || []);
+      
+      const notificationsRes = await notificationsAPI.getNotifications();
+      console.log('📨 Notifications response:', notificationsRes);
+
+      const allNotifications = (notificationsRes.data || [])
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+      console.log('📋 All notifications:', allNotifications);
+      setNotifications(allNotifications);
+
+      // Считаем непрочитанные - проверяем разные возможные поля
+      const unread = allNotifications.filter(notif => 
+        !notif.is_read && !notif.read_at
+      ).length;
+      setUnreadCount(unread);
+
     } catch (error) {
       console.error('❌ Error loading notifications:', error);
       setNotifications([]);
+      setUnreadCount(0);
     }
   };
 
@@ -39,6 +52,7 @@ const Header = () => {
       console.log('🔄 Loading unread count...');
       const response = await notificationsAPI.getUnreadCount();
       console.log('🔢 Unread count:', response.data.count);
+      
       setUnreadCount(response.data.count || 0);
     } catch (error) {
       console.error('❌ Error loading unread count:', error);
@@ -48,30 +62,71 @@ const Header = () => {
 
   // Отметить уведомление как прочитанное
   const handleMarkAsRead = async (notificationId, event) => {
-    event.stopPropagation();
+    if (event) event.stopPropagation();
+    
     try {
+      console.log('📝 Marking notification as read:', notificationId);
+      
+      // Всегда вызываем API для отметки как прочитанного
       await notificationsAPI.markAsRead(notificationId);
+      
+      // Обновляем локальное состояние
       setNotifications(prev => prev.map(notif => 
-        notif.id === notificationId ? { ...notif, is_read: true } : notif
+        notif.id === notificationId 
+          ? { 
+              ...notif, 
+              is_read: true,
+              read_at: new Date().toISOString() 
+            } 
+          : notif
+      ));
+      
+      setUnreadCount(prev => Math.max(0, prev - 1));
+      
+      console.log('✅ Notification marked as read');
+      
+    } catch (error) {
+      console.error('❌ Error marking notification as read:', error);
+      // Даже если API выдает ошибку, обновляем локально для лучшего UX
+      setNotifications(prev => prev.map(notif => 
+        notif.id === notificationId 
+          ? { ...notif, is_read: true } 
+          : notif
       ));
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
     }
   };
 
   // Отметить все как прочитанные
   const handleMarkAllAsRead = async () => {
     try {
-      const unreadNotifications = notifications.filter(notif => !notif.is_read);
+      console.log('📝 Marking all notifications as read');
+      
+      const unreadNotifications = notifications.filter(notif => 
+        !notif.is_read && !notif.read_at
+      );
+      
+      // Отмечаем все непрочитанные уведомления
       for (const notif of unreadNotifications) {
-        await notificationsAPI.markAsRead(notif.id);
+        try {
+          await notificationsAPI.markAsRead(notif.id);
+        } catch (error) {
+          console.error(`❌ Error marking notification ${notif.id} as read:`, error);
+        }
       }
       
-      setNotifications(prev => prev.map(notif => ({ ...notif, is_read: true })));
+      // Обновляем локальное состояние
+      setNotifications(prev => prev.map(notif => ({
+        ...notif, 
+        is_read: true,
+        read_at: notif.read_at || new Date().toISOString()
+      })));
+      
       setUnreadCount(0);
+      console.log('✅ All notifications marked as read');
+      
     } catch (error) {
-      console.error('Error marking all as read:', error);
+      console.error('❌ Error marking all as read:', error);
     }
   };
 
@@ -80,6 +135,7 @@ const Header = () => {
     loadNotifications();
     loadUnreadCount();
   }, []);
+  
 
   // Закрытие dropdown при клике вне его
   useEffect(() => {
@@ -101,6 +157,11 @@ const Header = () => {
   };
 
   const handleNotificationClick = (notification) => {
+    // Сразу отмечаем как прочитанное при клике
+    if (!notification.is_read && !notification.read_at) {
+      handleMarkAsRead(notification.id);
+    }
+    
     if (notification.data && notification.data.card_id && notification.data.project_id) {
       navigate(`/projects/${notification.data.project_id}`, { 
         state: { 
@@ -112,11 +173,18 @@ const Header = () => {
     setShowNotifications(false);
   };
 
+  // Проверить, прочитано ли уведомление
+  const isNotificationRead = (notification) => {
+    return notification.is_read || notification.read_at;
+  };
+
   // Получить иконку для типа уведомления
   const getNotificationIcon = (type) => {
     switch (type) {
       case 'card_assignment':
         return <UserPlus size={16} className="text-blue-600" />;
+      case 'mention':
+        return <MessageSquare size={16} className="text-green-600" />;
       default:
         return <Bell size={16} className="text-gray-600" />;
     }
@@ -127,28 +195,22 @@ const Header = () => {
     switch (type) {
       case 'card_assignment':
         return 'bg-blue-100';
+      case 'mention':
+        return 'bg-green-100';
       default:
         return 'bg-gray-100';
     }
   };
 
-  // Форматирование времени уведомления с поддержкой перевода
-  const formatNotificationTime = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now - date;
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    
-    if (diffInMinutes < 1) {
-      return t('notifications.justNow');
-    } else if (diffInMinutes < 60) {
-      return t('notifications.minutesAgo', { minutes: diffInMinutes });
-    } else if (diffInHours < 24) {
-      return t('notifications.hoursAgo', { hours: diffInHours });
-    } else {
-      // Для дат используем существующую функцию formatDate
-      return formatDate(dateString);
+  // Получить текст для типа уведомления
+  const getNotificationTypeText = (type) => {
+    switch (type) {
+      case 'card_assignment':
+        return 'Назначение на карточку';
+      case 'mention':
+        return 'Упоминание';
+      default:
+        return 'Уведомление';
     }
   };
 
@@ -184,7 +246,6 @@ const Header = () => {
 
   // Финальная функция форматирования времени
   const getFormattedTime = (dateString) => {
-    // Можно использовать текущий язык из контекста, но для простоты используем функцию
     return formatNotificationTimeRu(dateString);
   };
 
@@ -219,7 +280,7 @@ const Header = () => {
                     {unreadCount > 0 && (
                       <button
                         onClick={handleMarkAllAsRead}
-                        className="text-xs text-blue-600 hover:text-blue-800"
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                       >
                         {t('header.markAllAsRead')}
                       </button>
@@ -244,7 +305,7 @@ const Header = () => {
                       <div
                         key={notification.id}
                         className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
-                          !notification.is_read ? 'bg-blue-50' : ''
+                          !isNotificationRead(notification) ? 'bg-blue-50' : ''
                         }`}
                         onClick={() => handleNotificationClick(notification)}
                       >
@@ -255,20 +316,33 @@ const Header = () => {
                             {getNotificationIcon(notification.type)}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">
-                              {notification.title}
-                            </p>
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="text-sm font-medium text-gray-900">
+                                {notification.title}
+                              </p>
+                              <span className="text-xs text-gray-500 capitalize">
+                                {getNotificationTypeText(notification.type)}
+                              </span>
+                            </div>
                             <p className="text-sm text-gray-600 mt-1">
                               {notification.message}
                             </p>
+                            {notification.data?.mentioned_by && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                От: {notification.data.mentioned_by}
+                              </p>
+                            )}
                             <div className="flex justify-between items-center mt-2">
                               <p className="text-xs text-gray-500">
                                 {getFormattedTime(notification.created_at)}
                               </p>
-                              {!notification.is_read && (
+                              {!isNotificationRead(notification) && (
                                 <button
-                                  onClick={(e) => handleMarkAsRead(notification.id, e)}
-                                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center space-x-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMarkAsRead(notification.id, e);
+                                  }}
+                                  className="text-xs text-blue-600 hover:text-blue-800 flex items-center space-x-1 font-medium"
                                 >
                                   <CheckCircle size={12} />
                                   <span>{t('header.markAsRead')}</span>

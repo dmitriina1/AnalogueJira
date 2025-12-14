@@ -22,6 +22,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
+
 // Компонент фильтра по участникам
 const AssigneeFilter = ({ members, selectedAssignees, onFilterChange, onClearFilter }) => {
   const t = useTranslation();
@@ -60,29 +61,29 @@ const AssigneeFilter = ({ members, selectedAssignees, onFilterChange, onClearFil
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center space-x-2 px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors dark:bg-gray-700 dark:border-gray-600 dark:text-white"
       >
-        <Filter size={16} className="text-gray-600" />
-        <span className="text-sm font-medium text-gray-700">{getFilterLabel()}</span>
+        <Filter size={16} className="text-gray-600 dark:text-gray-400" />
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{getFilterLabel()}</span>
         <ChevronDown size={16} className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border z-20">
-          <div className="p-3 border-b">
-            <h3 className="font-semibold text-gray-900">{t('filter.filterByAssignees')}</h3>
-            <p className="text-sm text-gray-500">{t('filter.filterDescription')}</p>
+        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border z-20 dark:bg-gray-800 dark:border-gray-600">
+          <div className="p-3 border-b dark:border-gray-600">
+            <h3 className="font-semibold text-gray-900 dark:text-white">{t('filter.filterByAssignees')}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('filter.filterDescription')}</p>
           </div>
           
           <div className="max-h-60 overflow-y-auto">
             {/* Быстрые фильтры */}
-            <div className="p-2 border-b">
+            <div className="p-2 border-b dark:border-gray-600">
               <button
                 onClick={handleShowAll}
                 className={`w-full text-left px-3 py-2 rounded text-sm ${
                   selectedAssignees.length === 0 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'hover:bg-gray-100'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {t('filter.showAll')}
@@ -91,8 +92,8 @@ const AssigneeFilter = ({ members, selectedAssignees, onFilterChange, onClearFil
                 onClick={handleShowUnassigned}
                 className={`w-full text-left px-3 py-2 rounded text-sm ${
                   selectedAssignees.includes('unassigned') 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'hover:bg-gray-100'
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' 
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {t('filter.unassignedOnly')}
@@ -101,25 +102,25 @@ const AssigneeFilter = ({ members, selectedAssignees, onFilterChange, onClearFil
 
             {/* Список участников */}
             <div className="p-2">
-              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+              <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2 dark:text-gray-400">
                 {t('filter.selectUsers')}
               </h4>
               {members.map(member => (
-                <label key={member.user.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                <label key={member.user.id} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer dark:hover:bg-gray-700">
                   <input
                     type="checkbox"
                     checked={selectedAssignees.includes(member.user.id)}
                     onChange={() => handleAssigneeToggle(member.user.id)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
+                    className="rounded text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
                   />
                   <div className="flex items-center space-x-2 flex-1">
                     <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
                       {member.user.username[0].toUpperCase()}
                     </div>
-                    <span className="text-sm text-gray-700">{member.user.username}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{member.user.username}</span>
                   </div>
                   {member.role === 'admin' && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full dark:bg-blue-900 dark:text-blue-200">
                       {t('roles.admin')}
                     </span>
                   )}
@@ -129,10 +130,10 @@ const AssigneeFilter = ({ members, selectedAssignees, onFilterChange, onClearFil
           </div>
 
           {selectedAssignees.length > 0 && (
-            <div className="p-3 border-t">
+            <div className="p-3 border-t dark:border-gray-600">
               <button
                 onClick={onClearFilter}
-                className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium dark:text-blue-400 dark:hover:text-blue-300"
               >
                 {t('filter.clearFilter')}
               </button>
@@ -170,7 +171,7 @@ const SortableCard = ({ card, onClick, isGuestMode }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-white rounded-lg shadow-sm border p-4 mb-3 cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-white rounded-lg shadow-sm border p-4 mb-3 cursor-pointer hover:shadow-md transition-shadow dark:bg-gray-800 dark:border-gray-700 dark:text-white"
       onClick={() => onClick(card)}
     >
       <div className="flex items-start justify-between">
@@ -189,12 +190,12 @@ const SortableCard = ({ card, onClick, isGuestMode }) => {
             </div>
           )}
 
-          <h4 className="font-medium text-gray-900 mb-2">
+          <h4 className="font-medium text-gray-900 dark:text-white mb-2">
             {card.title}
           </h4>
 
           {/* Card Meta */}
-          <div className="flex items-center justify-between text-sm text-gray-500">
+          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
             <div className="flex items-center space-x-3">
               {/* Checklist Progress */}
               {checklistProgress && (
@@ -227,7 +228,7 @@ const SortableCard = ({ card, onClick, isGuestMode }) => {
                 {card.assignees.map(assignee => (
                   <div
                     key={assignee.id}
-                    className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white"
+                    className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white dark:border-gray-800"
                     title={assignee.username}
                   >
                     {assignee.username?.[0]?.toUpperCase()}
@@ -243,7 +244,7 @@ const SortableCard = ({ card, onClick, isGuestMode }) => {
           <div
             {...attributes}
             {...listeners}
-            className="ml-2 p-1 text-gray-400 hover:text-gray-600 cursor-grab"
+            className="ml-2 p-1 text-gray-400 hover:text-gray-600 cursor-grab dark:text-gray-500 dark:hover:text-gray-400"
           >
             <GripVertical size={16} />
           </div>
@@ -296,7 +297,7 @@ const SortableList = ({ list, onAddCard, onCardClick, onDeleteList, currentUserR
     <div
       ref={setNodeRef}
       style={style}
-      className="flex-shrink-0 w-80 bg-gray-100 rounded-lg p-4"
+      className="flex-shrink-0 w-80 bg-gray-100 rounded-lg p-4 dark:bg-gray-800"
     >
       <div className="flex justify-between items-center mb-4">
         <div
@@ -305,12 +306,12 @@ const SortableList = ({ list, onAddCard, onCardClick, onDeleteList, currentUserR
           style={{ cursor: isGuestMode ? 'default' : 'grab' }}
         >
           {!isGuestMode && <GripVertical size={16} className="text-gray-400" />}
-          <h3 className="font-semibold text-gray-900">{list.name}</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-white">{list.name}</h3>
         </div>
 
         <div className="flex items-center space-x-2">
           <div className="flex flex-col items-end">
-            <span className="text-sm text-gray-500 bg-white px-2 py-1 rounded">
+            <span className="text-sm text-gray-500 bg-white px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
               {filteredCards.length}
             </span>
             {hiddenCardsCount > 0 && (
@@ -325,20 +326,20 @@ const SortableList = ({ list, onAddCard, onCardClick, onDeleteList, currentUserR
             <div className="relative">
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-200 transition-colors"
+                className="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-200 transition-colors dark:text-gray-500 dark:hover:text-gray-400 dark:hover:bg-gray-700"
               >
                 <MoreHorizontal size={16} />
               </button>
 
               {/* Dropdown Menu */}
               {showMenu && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-10">
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border z-10 dark:bg-gray-800 dark:border-gray-600">
                   <button
                     onClick={() => {
                       onDeleteList(list.id);
                       setShowMenu(false);
                     }}
-                    className="w-full flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"
+                    className="w-full flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm dark:hover:bg-red-900"
                   >
                     <Trash2 size={16} />
                     <span>{t('common.delete')}</span>
@@ -362,7 +363,7 @@ const SortableList = ({ list, onAddCard, onCardClick, onDeleteList, currentUserR
           ))}
           
           {filteredCards.length === 0 && (
-            <div className="text-center py-8 text-gray-500 text-sm">
+            <div className="text-center py-8 text-gray-500 text-sm dark:text-gray-400">
               {t('filter.noCardsInList')}
             </div>
           )}
@@ -373,7 +374,7 @@ const SortableList = ({ list, onAddCard, onCardClick, onDeleteList, currentUserR
       {!isGuestMode && (currentUserRole === 'admin' || currentUserRole === 'member') && (
         <button
           onClick={() => onAddCard(list)}
-          className="w-full mt-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded flex items-center justify-center space-x-2 transition-colors"
+          className="w-full mt-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded flex items-center justify-center space-x-2 transition-colors dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700"
         >
           <Plus size={16} />
           <span>{t('board.addCard')}</span>
@@ -393,11 +394,11 @@ const CardPreview = ({ card }) => {
     : null;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border p-4 w-80 transform rotate-3">
-      <h4 className="font-medium text-gray-900 mb-2">
+    <div className="bg-white rounded-lg shadow-lg border p-4 w-80 transform rotate-3 dark:bg-gray-800 dark:border-gray-700">
+      <h4 className="font-medium text-gray-900 dark:text-white mb-2">
         {card.title}
       </h4>
-      <div className="flex items-center justify-between text-sm text-gray-500">
+      <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
         <div className="flex items-center space-x-3">
           {/* Checklist Progress */}
           {checklistProgress && (
@@ -407,12 +408,15 @@ const CardPreview = ({ card }) => {
             </div>
           )}
 
+          {/* Due Date */}
           {card.due_date && (
             <div className="flex items-center space-x-1">
               <Clock size={14} />
               <span>{new Date(card.due_date).toLocaleDateString()}</span>
             </div>
           )}
+
+          {/* Comments Count */}
           {card.comments && card.comments.length > 0 && (
             <div className="flex items-center space-x-1">
               <MessageSquare size={14} />
@@ -420,12 +424,14 @@ const CardPreview = ({ card }) => {
             </div>
           )}
         </div>
+
+        {/* Assignees */}
         {card.assignees && card.assignees.length > 0 && (
           <div className="flex -space-x-1">
             {card.assignees.map(assignee => (
               <div
                 key={assignee.id}
-                className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white"
+                className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs border-2 border-white dark:border-gray-800"
                 title={assignee.username}
               >
                 {assignee.username?.[0]?.toUpperCase()}
@@ -452,20 +458,20 @@ const TeamMembersDropdown = ({ members }) => {
       {/* Кнопка с аватарками */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors dark:hover:bg-gray-700"
       >
         <div className="flex -space-x-2">
           {displayMembers.map(member => (
             <div
               key={member.id}
-              className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm border-2 border-white"
+              className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm border-2 border-white dark:border-gray-800"
               title={member.user.username}
             >
               {member.user.username[0].toUpperCase()}
             </div>
           ))}
           {hasMoreMembers && (
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-xs border-2 border-white">
+            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-xs border-2 border-white dark:bg-gray-600 dark:text-gray-300">
               +{members.length - 5}
             </div>
           )}
@@ -475,25 +481,25 @@ const TeamMembersDropdown = ({ members }) => {
 
       {/* Выпадающий список */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border z-10">
-          <div className="p-3 border-b">
-            <h3 className="font-semibold text-gray-900">{t('project.teamMembers')}</h3>
-            <p className="text-sm text-gray-500">{members.length} {t('project.members')}</p>
+        <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border z-10 dark:bg-gray-800 dark:border-gray-600">
+          <div className="p-3 border-b dark:border-gray-600">
+            <h3 className="font-semibold text-gray-900 dark:text-white">{t('project.teamMembers')}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{members.length} {t('project.members')}</p>
           </div>
           <div className="max-h-60 overflow-y-auto">
             {members.map(member => (
-              <div key={member.id} className="flex items-center justify-between p-3 hover:bg-gray-50">
+              <div key={member.id} className="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                     {member.user.username[0].toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{member.user.username}</p>
-                    <p className="text-xs text-gray-500 capitalize">{t(`roles.${member.role}`)}</p>
+                    <p className="font-medium text-sm dark:text-white">{member.user.username}</p>
+                    <p className="text-xs text-gray-500 capitalize dark:text-gray-400">{t(`roles.${member.role}`)}</p>
                   </div>
                 </div>
                 {member.role === 'admin' && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full dark:bg-blue-900 dark:text-blue-200">
                     {t('roles.admin')}
                   </span>
                 )}
@@ -550,6 +556,9 @@ const ProjectDetail = () => {
 
   // Состояния для комментариев
   const [commentText, setCommentText] = useState('');
+  const [mentionSuggestions, setMentionSuggestions] = useState([]);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   // Состояния для Drag & Drop
   const [activeId, setActiveId] = useState(null);
@@ -583,25 +592,220 @@ const ProjectDetail = () => {
     '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'
   ];
 
-  useEffect(() => {
-    if (openCardIdFromState && fromNotification && board) {
-      // Ищем карточку во всех списках доски
-      let targetCard = null;
-      for (const list of board.lists) {
-        const foundCard = list.cards?.find(card => card.id === openCardIdFromState);
-        if (foundCard) {
-          targetCard = foundCard;
-          break;
-        }
+  // Функция для поиска пользователей
+  const searchUsers = async (query) => {
+    if (!project?.id) {
+      setMentionSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await usersAPI.searchProjectUsers(project.id, query);
+      setMentionSuggestions(response.data);
+      setShowMentions(true);
+      setMentionIndex(0);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      setMentionSuggestions([]);
+    }
+  };
+
+  // Обработчик изменения текста комментария
+  const handleCommentChange = (text) => {
+    setCommentText(text);
+
+    // Проверяем упоминания
+    const lastAtSymbol = text.lastIndexOf('@');
+    if (lastAtSymbol !== -1) {
+      const query = text.slice(lastAtSymbol + 1);
+      const beforeAt = text.slice(0, lastAtSymbol);
+      
+      // Проверяем, что @ не в середине слова и нет пробела после @
+      const isAtStartOfWord = lastAtSymbol === 0 || text[lastAtSymbol - 1] === ' ';
+      const hasSpaceAfterAt = query.includes(' ');
+      
+      if (isAtStartOfWord && !hasSpaceAfterAt) {
+        // Ищем пользователей даже при пустом запросе (просто @)
+        searchUsers(query);
+      } else {
+        setShowMentions(false);
+      }
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  // Функция для выбора пользователя
+  const handleSelectMention = (user) => {
+    const lastAtSymbol = commentText.lastIndexOf('@');
+    const beforeAt = commentText.slice(0, lastAtSymbol);
+    const newText = `${beforeAt}@${user.username} `;
+    
+    setCommentText(newText);
+    setShowMentions(false);
+  };
+
+  // Функция для отображения комментариев с подсветкой упоминаний
+  const renderCommentWithMentions = (text, mentions = []) => {
+    if (!text) return null;
+    
+    const mentionRegex = /@(\w+)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(text)) !== null) {
+      // Текст до упоминания
+      if (match.index > lastIndex) {
+        parts.push(text.slice(lastIndex, match.index));
       }
 
-      if (targetCard) {
-        setSelectedCard(targetCard);
-        // Очищаем состояние после использования
-        window.history.replaceState({}, document.title);
+      // Само упоминание
+      const username = match[1];
+      const mentionedUser = mentions.find(m => m.username === username);
+      
+      if (mentionedUser) {
+        parts.push(
+          <span 
+            key={match.index}
+            className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-1 rounded font-medium cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+            title={`Упомянут пользователь: ${mentionedUser.username}`}
+          >
+            @{username}
+          </span>
+        );
+      } else {
+        parts.push(`@${username}`);
       }
+
+      lastIndex = match.index + match[0].length;
     }
+
+    // Остаток текста после последнего упоминания
+    if (lastIndex < text.length) {
+      parts.push(text.slice(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
+  // Обработка клавиш для навигации по упоминаниям
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (showMentions) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setMentionIndex(prev => prev < mentionSuggestions.length - 1 ? prev + 1 : prev);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setMentionIndex(prev => prev > 0 ? prev - 1 : 0);
+        } else if (e.key === 'Escape') {
+          setShowMentions(false);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showMentions, mentionSuggestions]);
+
+  // Закрытие списка упоминаний при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMentions && !event.target.closest('.mention-container')) {
+        setShowMentions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMentions]);
+
+  // Обработка открытия карточки из уведомления
+  useEffect(() => {
+    const openCardFromNotification = async () => {
+      if (openCardIdFromState && fromNotification) {
+        console.log('🔔 Opening card from notification:', openCardIdFromState);
+        
+        // Если доска еще не загружена, ждем ее загрузки
+        if (!board) {
+          console.log('📋 Board not loaded yet, waiting...');
+          return;
+        }
+
+        // Ищем карточку во всех списках доски
+        let targetCard = null;
+        
+        for (const list of board.lists) {
+          const foundCard = list.cards?.find(card => card.id === openCardIdFromState);
+          if (foundCard) {
+            targetCard = foundCard;
+            break;
+          }
+        }
+
+        if (targetCard) {
+          console.log('✅ Card found in board, opening modal...');
+          
+          // Загружаем полные данные карточки
+          try {
+            const cardResponse = await cardsAPI.getCard(openCardIdFromState);
+            const fullCardData = cardResponse.data;
+            
+            setSelectedCard(fullCardData);
+            setShowCardModal(false); // Закрываем модалку создания карточки если открыта
+            
+            // Очищаем состояние после использования
+            window.history.replaceState({}, document.title);
+            console.log('✅ Card modal opened successfully');
+          } catch (error) {
+            console.error('❌ Error loading card details:', error);
+            // Если не удалось загрузить детали, используем базовые данные
+            setSelectedCard(targetCard);
+            window.history.replaceState({}, document.title);
+          }
+        } else {
+          console.log('❌ Card not found in current board, trying direct API call...');
+          // Пробуем загрузить карточку напрямую через API
+          try {
+            const cardResponse = await cardsAPI.getCard(openCardIdFromState);
+            const fullCardData = cardResponse.data;
+            setSelectedCard(fullCardData);
+            setShowCardModal(false);
+            window.history.replaceState({}, document.title);
+            console.log('✅ Card loaded via direct API call');
+          } catch (error) {
+            console.error('❌ Card not found via API:', error);
+            // Очищаем состояние даже если карточка не найдена
+            window.history.replaceState({}, document.title);
+          }
+        }
+      }
+    };
+
+    openCardFromNotification();
   }, [openCardIdFromState, fromNotification, board]);
+
+  // Обработка уведомления при загрузке доски
+  useEffect(() => {
+    if (openCardIdFromState && fromNotification && !board && project) {
+      console.log('🔄 Notification received but board not loaded, loading board...');
+      loadBoardData();
+    }
+  }, [openCardIdFromState, fromNotification, board, project]);
+
+  const loadBoardData = async () => {
+    if (!project?.boards?.[0]?.id) return;
+    
+    try {
+      const boardId = project.boards[0].id;
+      const boardRes = await boardsAPI.getBoard(boardId);
+      setBoard(boardRes.data);
+      console.log('✅ Board loaded for notification');
+    } catch (error) {
+      console.error('❌ Error loading board:', error);
+    }
+  };
 
   // Загрузка данных проекта
   useEffect(() => {
@@ -631,6 +835,8 @@ const ProjectDetail = () => {
 
   const loadProjectData = async () => {
     try {
+      console.log('🔄 Loading project data...');
+      
       if (isGuestMode) {
         // В guest режиме используем специальный endpoint
         const projectRes = await invitationsAPI.viewProjectByToken(guestToken);
@@ -663,8 +869,10 @@ const ProjectDetail = () => {
         }
       }
 
+      console.log('✅ Project data loaded successfully');
+
     } catch (error) {
-      console.error('Error loading project:', error);
+      console.error('❌ Error loading project:', error);
     } finally {
       setLoading(false);
     }
@@ -682,7 +890,7 @@ const ProjectDetail = () => {
   // Функция для проверки роли при создании карточки
   const handleAddCardClick = (list) => {
     if (isGuestMode || currentUserRole === 'viewer') {
-      alert(t('project.guestViewWarning'));
+      // alert(t('project.guestViewWarning'));
       return;
     }
     setSelectedList(list);
@@ -697,7 +905,7 @@ const ProjectDetail = () => {
       setGeneratedInvite(response.data);
     } catch (error) {
       console.error('Error creating invitation:', error);
-      alert(t('projects.failedToCreate'));
+      // alert(t('projects.failedToCreate'));
     }
   };
 
@@ -771,7 +979,7 @@ const ProjectDetail = () => {
 
     } catch (error) {
       console.error('Error creating list:', error);
-      alert(t('projects.failedToCreate'));
+      // alert(t('projects.failedToCreate'));
     }
   };
 
@@ -790,7 +998,7 @@ const ProjectDetail = () => {
 
     } catch (error) {
       console.error('Error deleting list:', error);
-      alert(t('projects.failedToCreate'));
+      // alert(t('projects.failedToCreate'));
     }
   };
 
@@ -806,7 +1014,7 @@ const ProjectDetail = () => {
       setSelectedList(null);
     } catch (error) {
       console.error('Error creating card:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -828,7 +1036,7 @@ const ProjectDetail = () => {
 
     } catch (error) {
       console.error('Error updating card:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -838,12 +1046,21 @@ const ProjectDetail = () => {
     if (!commentText.trim()) return;
 
     try {
-      await commentsAPI.addComment(selectedCard.id, commentText);
+      const response = await commentsAPI.addComment(selectedCard.id, commentText);
+      const newComment = response.data;
+      
+      // Обновляем данные карточки
       await refreshCardData();
       setCommentText('');
+      
+      // Показываем уведомление об успешном добавлении с упоминаниями
+      // if (newComment.mentions && newComment.mentions.length > 0) {
+      //   const mentionedUsers = newComment.mentions.map(user => user.username).join(', ');
+      //   alert(`Комментарий добавлен. Упомянуты: ${mentionedUsers}`);
+      // }
     } catch (error) {
       console.error('Error adding comment:', error);
-      alert(t('board.failedToAddComment'));
+      // alert(t('board.failedToAddComment'));
     }
   };
 
@@ -868,7 +1085,7 @@ const ProjectDetail = () => {
 
     } catch (error) {
       console.error('Error assigning user:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -879,7 +1096,7 @@ const ProjectDetail = () => {
       await refreshCardData();
     } catch (error) {
       console.error('Error adding label:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -889,7 +1106,7 @@ const ProjectDetail = () => {
       await refreshCardData();
     } catch (error) {
       console.error('Error removing label:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -916,7 +1133,7 @@ const ProjectDetail = () => {
       setNewLabel({ name: '', color: '#3B82F6' });
     } catch (error) {
       console.error('Error creating and adding label:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -930,7 +1147,7 @@ const ProjectDetail = () => {
       await refreshCardData();
     } catch (error) {
       console.error('Error creating checklist:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -944,7 +1161,7 @@ const ProjectDetail = () => {
       await refreshCardData();
     } catch (error) {
       console.error('Error adding checklist item:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -963,7 +1180,7 @@ const ProjectDetail = () => {
       await refreshCardData();
     } catch (error) {
       console.error('Error deleting checklist:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -973,7 +1190,7 @@ const ProjectDetail = () => {
       await refreshCardData();
     } catch (error) {
       console.error('Error deleting checklist item:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -1016,7 +1233,7 @@ const ProjectDetail = () => {
       console.log('Assignee removed successfully');
     } catch (error) {
       console.error('Error removing assignee:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -1044,7 +1261,7 @@ const ProjectDetail = () => {
       await refreshCardData();
     } catch (error) {
       console.error('Error creating default checklist:', error);
-      alert(t('board.failedToCreateCard'));
+      // alert(t('board.failedToCreateCard'));
     }
   };
 
@@ -1148,7 +1365,7 @@ const ProjectDetail = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="loading-spinner"></div>
-        <span className="ml-2">{t('common.loading')}</span>
+        <span className="ml-2 dark:text-white">{t('common.loading')}</span>
       </div>
     );
   }
@@ -1171,23 +1388,23 @@ const ProjectDetail = () => {
         <div>
           <div className="flex items-center space-x-2 mb-2">
             {!isGuestMode && (
-              <Link to="/projects" className="text-blue-600 hover:text-blue-800 text-sm">
+              <Link to="/projects" className="text-blue-600 hover:text-blue-800 text-sm dark:text-blue-400 dark:hover:text-blue-300">
                 {t('project.backToProjects')}
               </Link>
             )}
             {isGuestMode && (
-              <span className="text-blue-600 text-sm">{t('project.guestViewMode')}</span>
+              <span className="text-blue-600 text-sm dark:text-blue-400">{t('project.guestViewMode')}</span>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-          <p className="text-gray-600">{project.description}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{project.name}</h1>
+          <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
 
           {/* Индикатор guest-режима */}
           {isGuestMode && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900 dark:border-blue-800">
               <div className="flex items-center space-x-2">
-                <Users size={16} className="text-blue-600" />
-                <span className="text-sm text-blue-700">
+                <Users size={16} className="text-blue-600 dark:text-blue-400" />
+                <span className="text-sm text-blue-700 dark:text-blue-300">
                   {t('project.guestViewWarning')}
                 </span>
               </div>
@@ -1199,7 +1416,7 @@ const ProjectDetail = () => {
       {/* Project Board */}
       <div>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">{t('project.projectBoard')}</h2>
+          <h2 className="text-lg font-semibold dark:text-white">{t('project.projectBoard')}</h2>
 
           <div className="flex items-center space-x-3">
             {/* Фильтр по участникам - не показываем в guest режиме */}
@@ -1268,7 +1485,7 @@ const ProjectDetail = () => {
                 <div className="flex-shrink-0 w-80">
                   <button
                     onClick={() => setShowCreateListModal(true)}
-                    className="w-full h-full bg-gray-100 hover:bg-gray-200 rounded-lg p-4 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors border-2 border-dashed border-gray-300"
+                    className="w-full h-full bg-gray-100 hover:bg-gray-200 rounded-lg p-4 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors border-2 border-dashed border-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-400 dark:hover:text-gray-300 dark:border-gray-600"
                   >
                     <div className="flex items-center space-x-2">
                       <Plus size={20} />
@@ -1284,10 +1501,10 @@ const ProjectDetail = () => {
             </DragOverlay>
           </DndContext>
         ) : (
-          <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+          <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg dark:border-gray-600">
             <Plus size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('project.noLists')}</h3>
-            <p className="text-gray-600 mb-4">{t('project.createFirstList')}</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2 dark:text-white">{t('project.noLists')}</h3>
+            <p className="text-gray-600 mb-4 dark:text-gray-400">{t('project.createFirstList')}</p>
             {!isGuestMode && (currentUserRole === 'admin' || currentUserRole === 'member') && (
               <button
                 onClick={() => setShowCreateListModal(true)}
@@ -1304,10 +1521,10 @@ const ProjectDetail = () => {
       {showCreateListModal && (
         <div className="modal-overlay">
           <div className="modal max-w-md">
-            <h2 className="text-xl font-semibold mb-4">{t('projects.createNewProject')}</h2>
+            <h2 className="text-xl font-semibold mb-4 dark:text-white">{t('projects.createNewProject')}</h2>
             <form onSubmit={handleCreateList}>
               <div className="form-group">
-                <label>{t('common.title')} *</label>
+                <label className="dark:text-gray-300">{t('common.title')} *</label>
                 <input
                   type="text"
                   value={newListName}
@@ -1315,6 +1532,7 @@ const ProjectDetail = () => {
                   required
                   placeholder={t('projects.enterProjectName')}
                   autoFocus
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -1345,33 +1563,36 @@ const ProjectDetail = () => {
       {showCardModal && (
         <div className="modal-overlay">
           <div className="modal max-w-2xl">
-            <h2 className="text-xl font-semibold mb-4">{t('board.createCard')} {selectedList?.name}</h2>
+            <h2 className="text-xl font-semibold mb-4 dark:text-white">{t('board.createCard')} {selectedList?.name}</h2>
             <form onSubmit={handleCreateCard}>
               <div className="form-group">
-                <label>{t('board.cardTitle')} *</label>
+                <label className="dark:text-gray-300">{t('board.cardTitle')} *</label>
                 <input
                   type="text"
                   value={cardForm.title}
                   onChange={(e) => setCardForm(prev => ({ ...prev, title: e.target.value }))}
                   required
                   placeholder={t('board.enterCardTitle')}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
               <div className="form-group">
-                <label>{t('common.description')}</label>
+                <label className="dark:text-gray-300">{t('common.description')}</label>
                 <textarea
                   value={cardForm.description}
                   onChange={(e) => setCardForm(prev => ({ ...prev, description: e.target.value }))}
                   rows="3"
                   placeholder={t('board.enterCardDescription')}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
               <div className="form-group">
-                <label>{t('board.dueDate')}</label>
+                <label className="dark:text-gray-300">{t('board.dueDate')}</label>
                 <input
                   type="date"
                   value={cardForm.due_date}
                   onChange={(e) => setCardForm(prev => ({ ...prev, due_date: e.target.value }))}
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </div>
               <div className="flex justify-end space-x-3 mt-6">
@@ -1403,18 +1624,18 @@ const ProjectDetail = () => {
                 {isGuestMode ? (
                   <div>
                     <div className="flex items-center space-x-2 mb-2">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full dark:bg-blue-900 dark:text-blue-200">
                         {t('project.guestViewMode')}
                       </span>
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">{selectedCard.title}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedCard.title}</h2>
                   </div>
                 ) : (
                   <input
                     type="text"
                     value={editingCardData.title}
                     onChange={(e) => setEditingCardData(prev => ({ ...prev, title: e.target.value }))}
-                    className="text-2xl font-bold text-gray-900 w-full p-2 border border-transparent hover:border-gray-300 rounded focus:border-blue-500 focus:outline-none"
+                    className="text-2xl font-bold text-gray-900 w-full p-2 border border-transparent hover:border-gray-300 rounded focus:border-blue-500 focus:outline-none dark:bg-gray-800 dark:text-white dark:hover:border-gray-600 dark:focus:border-blue-400"
                     placeholder={t('board.cardTitle')}
                   />
                 )}
@@ -1430,7 +1651,7 @@ const ProjectDetail = () => {
                 )}
                 <button
                   onClick={() => setSelectedCard(null)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                  className="text-gray-500 hover:text-gray-700 text-2xl dark:text-gray-400 dark:hover:text-gray-300"
                 >
                   ×
                 </button>
@@ -1442,9 +1663,9 @@ const ProjectDetail = () => {
               <div className="lg:col-span-3 space-y-6">
                 {/* Description */}
                 <div>
-                  <h3 className="font-semibold mb-2">{t('common.description')}</h3>
+                  <h3 className="font-semibold mb-2 dark:text-white">{t('common.description')}</h3>
                   {isGuestMode ? (
-                    <p className="text-gray-700 bg-gray-50 p-3 rounded">
+                    <p className="text-gray-700 bg-gray-50 p-3 rounded dark:bg-gray-700 dark:text-gray-300">
                       {selectedCard.description || t('board.noDescription')}
                     </p>
                   ) : (
@@ -1452,7 +1673,7 @@ const ProjectDetail = () => {
                       value={editingCardData.description}
                       onChange={(e) => setEditingCardData(prev => ({ ...prev, description: e.target.value }))}
                       rows="4"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       placeholder={t('board.enterCardDescription')}
                     />
                   )}
@@ -1461,8 +1682,8 @@ const ProjectDetail = () => {
                 {/* Due Date */}
                 {selectedCard.due_date && (
                   <div>
-                    <h3 className="font-semibold mb-2">{t('board.dueDate')}</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mb-2 dark:text-white">{t('board.dueDate')}</h3>
+                    <p className="text-gray-700 dark:text-gray-300">
                       {new Date(selectedCard.due_date).toLocaleDateString()}
                     </p>
                   </div>
@@ -1471,7 +1692,7 @@ const ProjectDetail = () => {
                 {/* Checklists */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold flex items-center space-x-2">
+                    <h3 className="font-semibold flex items-center space-x-2 dark:text-white">
                       <CheckSquare size={20} />
                       <span>{t('board.checklists')}</span>
                     </h3>
@@ -1480,19 +1701,19 @@ const ProjectDetail = () => {
                   {/* Single Checklist Display */}
                   {selectedCard?.checklists && selectedCard.checklists.length > 0 ? (
                     selectedCard.checklists.slice(0, 1).map(checklist => (
-                      <div key={checklist.id} className="border border-gray-200 rounded-lg p-4">
+                      <div key={checklist.id} className="border border-gray-200 rounded-lg p-4 dark:border-gray-600">
                         <div className="flex items-center space-x-2 mb-3">
                           <input
                             type="text"
                             defaultValue={checklist.title}
                             onBlur={(e) => handleUpdateChecklistTitle(checklist.id, e.target.value)}
-                            className="font-medium border border-transparent hover:border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none flex-1"
+                            className="font-medium border border-transparent hover:border-gray-300 rounded px-2 py-1 focus:border-blue-500 focus:outline-none flex-1 dark:bg-gray-700 dark:text-white dark:hover:border-gray-500"
                           />
                         </div>
 
                         {/* Progress */}
                         <div className="mb-3">
-                          <div className="flex justify-between text-sm text-gray-600 mb-1">
+                          <div className="flex justify-between text-sm text-gray-600 mb-1 dark:text-gray-400">
                             <span>
                               {checklist.completed_count || 0} of {checklist.total_count || 0} {t('common.completed')}
                             </span>
@@ -1500,7 +1721,7 @@ const ProjectDetail = () => {
                               {checklist.total_count ? Math.round((checklist.completed_count / checklist.total_count) * 100) : 0}%
                             </span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-600">
                             <div
                               className="bg-green-500 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${checklist.total_count ? (checklist.completed_count / checklist.total_count) * 100 : 0}%` }}
@@ -1516,14 +1737,14 @@ const ProjectDetail = () => {
                                 type="checkbox"
                                 checked={item.completed}
                                 onChange={(e) => handleToggleChecklistItem(item.id, e.target.checked)}
-                                className="rounded text-blue-600 focus:ring-blue-500"
+                                className="rounded text-blue-600 focus:ring-blue-500 dark:bg-gray-600"
                               />
-                              <span className={`flex-1 ${item.completed ? 'line-through text-gray-500' : ''}`}>
+                              <span className={`flex-1 ${item.completed ? 'line-through text-gray-500' : ''} dark:text-gray-300`}>
                                 {item.text}
                               </span>
                               <button
                                 onClick={() => handleDeleteChecklistItem(item.id)}
-                                className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="text-red-600 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-opacity dark:text-red-400 dark:hover:text-red-300"
                               >
                                 <Trash2 size={14} />
                               </button>
@@ -1541,7 +1762,7 @@ const ProjectDetail = () => {
                               [checklist.id]: e.target.value
                             }))}
                             placeholder={t('board.addCommentPlaceholder')}
-                            className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
                                 handleAddChecklistItem(checklist.id);
@@ -1559,9 +1780,9 @@ const ProjectDetail = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg dark:border-gray-600">
                       <CheckSquare size={32} className="mx-auto text-gray-400 mb-2" />
-                      <p className="text-gray-500">{t('board.noChecklists')}</p>
+                      <p className="text-gray-500 dark:text-gray-400">{t('board.noChecklists')}</p>
                       <button
                         onClick={() => handleCreateDefaultChecklist()}
                         className="btn btn-primary mt-2 text-sm"
@@ -1572,47 +1793,100 @@ const ProjectDetail = () => {
                   )}
                 </div>
 
-
                 {/* Comments */}
                 <div>
-                  <h3 className="font-semibold mb-4">{t('board.comments')}</h3>
+                  <h3 className="font-semibold mb-4 dark:text-white">{t('board.comments')}</h3>
 
                   {!isGuestMode && (
-                    <form onSubmit={handleAddComment} className="mb-4">
-                      <textarea
-                        value={commentText}
-                        onChange={(e) => setCommentText(e.target.value)}
-                        placeholder={t('board.addCommentPlaceholder')}
-                        className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        rows="3"
-                      />
-                      <div className="flex justify-end mt-2">
-                        <button
-                          type="submit"
-                          disabled={!commentText.trim()}
-                          className="btn btn-primary"
-                        >
-                          {t('board.addComment')}
-                        </button>
-                      </div>
-                    </form>
+                    <div className="relative mb-4 mention-container">
+                      <form onSubmit={handleAddComment}>
+                        <textarea
+                          value={commentText}
+                          onChange={(e) => handleCommentChange(e.target.value)}
+                          placeholder={t('board.addCommentPlaceholder')}
+                          className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                          rows="3"
+                          onKeyDown={(e) => {
+                            // Навигация по предложениям стрелками
+                            if (showMentions) {
+                              if (e.key === 'ArrowDown') {
+                                e.preventDefault();
+                                setMentionIndex(prev => prev < mentionSuggestions.length - 1 ? prev + 1 : prev);
+                              } else if (e.key === 'ArrowUp') {
+                                e.preventDefault();
+                                setMentionIndex(prev => prev > 0 ? prev - 1 : 0);
+                              } else if (e.key === 'Enter' && showMentions && mentionSuggestions[mentionIndex]) {
+                                e.preventDefault();
+                                handleSelectMention(mentionSuggestions[mentionIndex]);
+                              } else if (e.key === 'Escape') {
+                                setShowMentions(false);
+                              }
+                            }
+                          }}
+                        />
+                        
+                        {/* Выпадающий список пользователей для упоминаний */}
+                        {showMentions && mentionSuggestions.length > 0 && (
+                          <div className="absolute bottom-full left-0 right-0 mb-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                            {mentionSuggestions.map((user, index) => (
+                              <button
+                                key={user.id}
+                                type="button"
+                                onClick={() => handleSelectMention(user)}
+                                className={`w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                                  index === mentionIndex ? 'bg-blue-50 dark:bg-blue-900' : ''
+                                }`}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                    {user.username[0].toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">
+                                      {user.username}
+                                    </p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                      {user.email}
+                                    </p>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        
+                        <div className="flex justify-end mt-2">
+                          <button
+                            type="submit"
+                            disabled={!commentText.trim()}
+                            className="btn btn-primary"
+                          >
+                            {t('board.addComment')}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
                   )}
 
                   <div className="space-y-4">
                     {selectedCard.comments?.map(comment => (
-                      <div key={comment.id} className="bg-gray-50 rounded-lg p-4">
+                      <div key={comment.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center space-x-2">
                             <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
                               {comment.author?.username?.[0]?.toUpperCase()}
                             </div>
-                            <span className="font-medium">{comment.author?.username}</span>
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {comment.author?.username}
+                            </span>
                           </div>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
                             {new Date(comment.created_at).toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-gray-700">{comment.text}</p>
+                        <div className="text-gray-700 dark:text-gray-300">
+                          {renderCommentWithMentions(comment.text, comment.mentions || [])}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -1627,17 +1901,17 @@ const ProjectDetail = () => {
                     {/* Assignees - показываем в guest режиме */}
                     {selectedCard.assignees && selectedCard.assignees.length > 0 && (
                       <div className="card">
-                        <h3 className="font-semibold mb-3 flex items-center space-x-2">
+                        <h3 className="font-semibold mb-3 flex items-center space-x-2 dark:text-white">
                           <Users size={18} />
                           <span>{t('board.assignees')}</span>
                         </h3>
                         <div className="space-y-2">
                           {selectedCard.assignees?.map(assignee => (
-                            <div key={assignee.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded">
+                            <div key={assignee.id} className="flex items-center space-x-2 p-2 bg-gray-50 rounded dark:bg-gray-700">
                               <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
                                 {assignee.username?.[0]?.toUpperCase()}
                               </div>
-                              <span className="text-sm">{assignee.username}</span>
+                              <span className="text-sm dark:text-gray-300">{assignee.username}</span>
                             </div>
                           ))}
                         </div>
@@ -1647,7 +1921,7 @@ const ProjectDetail = () => {
                     {/* Labels - показываем в guest режиме */}
                     {selectedCard.labels && selectedCard.labels.length > 0 && (
                       <div className="card">
-                        <h3 className="font-semibold mb-3 flex items-center space-x-2">
+                        <h3 className="font-semibold mb-3 flex items-center space-x-2 dark:text-white">
                           <Tag size={18} />
                           <span>{t('board.labels')}</span>
                         </h3>
@@ -1667,24 +1941,24 @@ const ProjectDetail = () => {
 
                     {/* Card Info - показываем в guest режиме */}
                     <div className="card">
-                      <h3 className="font-semibold mb-3">{t('board.cardInfo')}</h3>
+                      <h3 className="font-semibold mb-3 dark:text-white">{t('board.cardInfo')}</h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">{t('board.created')}:</span>
-                          <span>{new Date(selectedCard.created_at).toLocaleDateString()}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('board.created')}:</span>
+                          <span className="dark:text-gray-300">{new Date(selectedCard.created_at).toLocaleDateString()}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">{t('board.lastUpdated')}:</span>
-                          <span>{new Date(selectedCard.updated_at).toLocaleDateString()}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('board.lastUpdated')}:</span>
+                          <span className="dark:text-gray-300">{new Date(selectedCard.updated_at).toLocaleDateString()}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">{t('board.author')}:</span>
-                          <span>{selectedCard.created_by?.username}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('board.author')}:</span>
+                          <span className="dark:text-gray-300">{selectedCard.created_by?.username}</span>
                         </div>
                         {selectedCard.due_date && (
                           <div className="flex justify-between">
-                            <span className="text-gray-600">{t('board.dueDate')}:</span>
-                            <span>{new Date(selectedCard.due_date).toLocaleDateString()}</span>
+                            <span className="text-gray-600 dark:text-gray-400">{t('board.dueDate')}:</span>
+                            <span className="dark:text-gray-300">{new Date(selectedCard.due_date).toLocaleDateString()}</span>
                           </div>
                         )}
                       </div>
@@ -1695,7 +1969,7 @@ const ProjectDetail = () => {
                   <>
                     {/* Assignees */}
                     <div className="card">
-                      <h3 className="font-semibold mb-3 flex items-center space-x-2">
+                      <h3 className="font-semibold mb-3 flex items-center space-x-2 dark:text-white">
                         <Users size={18} />
                         <span>{t('board.assignees')}</span>
                       </h3>
@@ -1703,16 +1977,16 @@ const ProjectDetail = () => {
                       {/* Current Assignees */}
                       <div className="space-y-2 mb-3">
                         {selectedCard.assignees?.map(assignee => (
-                          <div key={assignee.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div key={assignee.id} className="flex items-center justify-between p-2 bg-gray-50 rounded dark:bg-gray-700">
                             <div className="flex items-center space-x-2">
                               <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs">
                                 {assignee.username?.[0]?.toUpperCase()}
                               </div>
-                              <span className="text-sm">{assignee.username}</span>
+                              <span className="text-sm dark:text-gray-300">{assignee.username}</span>
                             </div>
                             <button
                               onClick={() => handleRemoveAssignee(selectedCard.id, assignee.id)}
-                              className="text-red-600 hover:text-red-800 text-sm"
+                              className="text-red-600 hover:text-red-800 text-sm dark:text-red-400 dark:hover:text-red-300"
                             >
                               <X size={14} />
                             </button>
@@ -1728,7 +2002,7 @@ const ProjectDetail = () => {
                             e.target.value = '';
                           }
                         }}
-                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       >
                         <option value="">{t('board.assignTeamMember')}...</option>
                         {availableMembers
@@ -1744,7 +2018,7 @@ const ProjectDetail = () => {
 
                     {/* Labels */}
                     <div className="card">
-                      <h3 className="font-semibold mb-3 flex items-center space-x-2">
+                      <h3 className="font-semibold mb-3 flex items-center space-x-2 dark:text-white">
                         <Tag size={18} />
                         <span>{t('board.labels')}</span>
                       </h3>
@@ -1758,11 +2032,11 @@ const ProjectDetail = () => {
                                 className="w-4 h-4 rounded"
                                 style={{ backgroundColor: label.color }}
                               ></div>
-                              <span className="text-sm">{label.name}</span>
+                              <span className="text-sm dark:text-gray-300">{label.name}</span>
                             </div>
                             <button
                               onClick={() => handleRemoveLabel(label.id)}
-                              className="text-red-600 hover:text-red-800 text-sm"
+                              className="text-red-600 hover:text-red-800 text-sm dark:text-red-400 dark:hover:text-red-300"
                             >
                               <X size={14} />
                             </button>
@@ -1778,7 +2052,7 @@ const ProjectDetail = () => {
                             e.target.value = '';
                           }
                         }}
-                        className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       >
                         <option value="">{t('board.addExistingLabel')}...</option>
                         {projectLabels
@@ -1792,8 +2066,8 @@ const ProjectDetail = () => {
                       </select>
 
                       {/* Create New Label */}
-                      <div className="border-t pt-3">
-                        <h4 className="text-sm font-medium mb-2">{t('board.createNewLabel')}</h4>
+                      <div className="border-t pt-3 dark:border-gray-600">
+                        <h4 className="text-sm font-medium mb-2 dark:text-gray-300">{t('board.createNewLabel')}</h4>
 
                         {/* Поле ввода названия метки */}
                         <div className="mb-2">
@@ -1802,7 +2076,7 @@ const ProjectDetail = () => {
                             value={newLabel.name}
                             onChange={(e) => setNewLabel(prev => ({ ...prev, name: e.target.value }))}
                             placeholder={t('board.labelName')}
-                            className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
                                 handleCreateAndAddLabel();
@@ -1818,7 +2092,7 @@ const ProjectDetail = () => {
                               <button
                                 key={color}
                                 onClick={() => setNewLabel(prev => ({ ...prev, color }))}
-                                className={`w-6 h-6 rounded border-2 ${newLabel.color === color ? 'border-gray-800' : 'border-transparent'
+                                className={`w-6 h-6 rounded border-2 ${newLabel.color === color ? 'border-gray-800 dark:border-gray-300' : 'border-transparent'
                                   } hover:border-gray-400 transition-colors`}
                                 style={{ backgroundColor: color }}
                               />
@@ -1839,19 +2113,19 @@ const ProjectDetail = () => {
 
                     {/* Card Info */}
                     <div className="card">
-                      <h3 className="font-semibold mb-3">{t('board.cardInfo')}</h3>
+                      <h3 className="font-semibold mb-3 dark:text-white">{t('board.cardInfo')}</h3>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">{t('board.created')}:</span>
-                          <span>{new Date(selectedCard.created_at).toLocaleDateString()}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('board.created')}:</span>
+                          <span className="dark:text-gray-300">{new Date(selectedCard.created_at).toLocaleDateString()}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">{t('board.lastUpdated')}:</span>
-                          <span>{new Date(selectedCard.updated_at).toLocaleDateString()}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('board.lastUpdated')}:</span>
+                          <span className="dark:text-gray-300">{new Date(selectedCard.updated_at).toLocaleDateString()}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">{t('board.author')}:</span>
-                          <span>{selectedCard.created_by?.username}</span>
+                          <span className="text-gray-600 dark:text-gray-400">{t('board.author')}:</span>
+                          <span className="dark:text-gray-300">{selectedCard.created_by?.username}</span>
                         </div>
                       </div>
                     </div>
@@ -1862,7 +2136,6 @@ const ProjectDetail = () => {
           </div>
         </div>
       )}
-
       {/* Create Invitation Modal */}
       {showInviteModal && (
         <div className="modal-overlay">
@@ -1912,7 +2185,7 @@ const ProjectDetail = () => {
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(generatedInvite.invite_url);
-                        alert(t('invitations.linkCopied'));
+                        // alert(t('invitations.linkCopied'));
                       }}
                       className="btn btn-primary text-sm"
                     >

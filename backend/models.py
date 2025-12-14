@@ -270,6 +270,16 @@ class ChecklistItem(db.Model):
             'created_at': self.created_at.isoformat()
         }
 
+class Mention(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=False)
+    mentioned_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Отношения - используем back_populates вместо backref
+    mentioned_user = db.relationship('User', foreign_keys=[mentioned_user_id])
+    comment = db.relationship('Comment', back_populates='mentions')
+    
 # Модель комментария
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -279,8 +289,9 @@ class Comment(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # ДОБАВИТЬ это отношение:
+    # Отношения
     author = db.relationship('User', foreign_keys=[author_id])
+    mentions = db.relationship('Mention', back_populates='comment', cascade='all, delete-orphan')
     
     def to_dict(self):
         return {
@@ -289,7 +300,8 @@ class Comment(db.Model):
             'card_id': self.card_id,
             'author': self.author.to_dict() if self.author else None,
             'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat()
+            'updated_at': self.updated_at.isoformat(),
+            'mentions': [mention.mentioned_user.to_dict() for mention in self.mentions] if self.mentions else []
         }
         
 class Notification(db.Model):
@@ -316,3 +328,4 @@ class Notification(db.Model):
             'read_at': self.read_at.isoformat() if self.read_at else None,
             'is_read': self.read_at is not None
         }
+        

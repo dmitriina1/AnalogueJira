@@ -40,6 +40,8 @@ export const projectsAPI = {
 
 export const usersAPI = {
   getUsers: () => api.get('/users'),
+  searchProjectUsers: (projectId, query) => 
+    api.get(`/projects/${projectId}/users/search?q=${encodeURIComponent(query)}`),
 };
 
 export const userAPI = {
@@ -50,6 +52,10 @@ export const notificationsAPI = {
   // Создать уведомление о назначении
   createAssignmentNotification: (data) => 
     api.post('/notifications/assignment', data),
+
+  // Создать уведомление об упоминании
+  createMentionNotification: (data) => 
+    api.post('/notifications/mention', data),
   
   // Получить уведомления пользователя
   getNotifications: () => 
@@ -61,7 +67,10 @@ export const notificationsAPI = {
   
   // Получить количество непрочитанных уведомлений
   getUnreadCount: () => 
-    api.get('/notifications/unread-count')
+    api.get('/notifications/unread-count'),
+
+  getMentions: () => 
+    api.get('/user/mentions')
 };
 
 export const boardsAPI = {
